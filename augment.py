@@ -30,7 +30,7 @@ def augment_and_save(image_path, ground_truth_path, index, aug_index):
     augmented_ground_truth_dir = os.path.dirname(ground_truth_path)
 
     augmented_image_filename = f'augmented_image_{index}_{aug_index}.png'
-    augmented_ground_truth_filename = f'augmented_ground_truth_{index}_{aug_index}.png'
+    augmented_ground_truth_filename = f'augmented_image_{index}_{aug_index}.png'
 
     augmented_image_path = os.path.join(augmented_image_dir, augmented_image_filename)
     augmented_ground_truth_path = os.path.join(augmented_ground_truth_dir, augmented_ground_truth_filename)
