@@ -13,7 +13,8 @@ def augment_and_save(image_path, ground_truth_path, index, aug_index):
         iaa.Fliplr(0.5),  
         iaa.Flipud(0.5),  
         iaa.Affine(
-            rotate=(-180, 180), 
+            rotate=(-180, 180),
+            scale={"x": (0.7, 1.3), "y": (0.7, 1.3)},  
             mode='symmetric'
         ),
         iaa.Multiply((0.9, 1.1)),
