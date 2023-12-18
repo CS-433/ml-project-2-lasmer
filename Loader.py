@@ -4,6 +4,7 @@ from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 import os
+import numpy as np
 import matplotlib.image as mpimg
 
 class SatelliteDataset(Dataset):
@@ -18,15 +19,34 @@ class SatelliteDataset(Dataset):
 
     def __len__(self):
         return len(self.images)
-
+    
     def __getitem__(self, idx):
         img_name = os.path.join(self.images_dir, self.images[idx])
-
-        
         image = mpimg.imread(img_name)
+        if image.shape[0] != 416 or image.shape[1] != 416:
+            image = Image.open(img_name)
+            image = image.resize((416, 416))
+            image = np.array(image) 
 
         ground_truth_name = os.path.join(self.ground_truth_dir, self.images[idx])
-        ground_truth = mpimg.imread(ground_truth_name)
+        try:
+            ground_truth = mpimg.imread(ground_truth_name)
+        except FileNotFoundError:
+            try :
+                ground_truth_name = ground_truth_name.replace("sat", "mask")
+                ground_truth = mpimg.imread(ground_truth_name)
+            except :
+                try : 
+                    ground_truth_name = ground_truth_name.replace("image", "ground_truth", 1)
+                    ground_truth = mpimg.imread(ground_truth_name)
+                except :
+                    ground_truth_name = ground_truth_name.replace("sat", "label")
+                    ground_truth = mpimg.imread(ground_truth_name)
+
+        if ground_truth.shape[0] != 416 or ground_truth.shape[1] != 416:
+            ground_truth = Image.open(ground_truth_name)
+            ground_truth = ground_truth.resize((416, 416))
+            ground_truth = np.array(ground_truth)
 
         if self.transform:
             image = self.transform(image)
