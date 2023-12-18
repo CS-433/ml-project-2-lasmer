@@ -55,19 +55,9 @@ def train(model,batch_size=8, epochs=50, lr=1e-4,nb_samples_mit=0,nb_samples = 0
     augmented_dataset2 = SatelliteDataset("data/augmented/augmented_images", "data/augmented/augmented_ground_truth", transform=transform)
     print("Samples from augmented dataset :", len(augmented_dataset2))
     
-    # dataset_mit = SatelliteDataset("data/MIT/training/images", "data/MIT/training/groundtruth", transform=transform)
-    # dataset_mit = torch.utils.data.Subset(dataset_mit, range(nb_samples_mit))
-    # print("Samples from MIT dataset :", nb_samples_mit)
-    # dataset_deepglobe = SatelliteDataset("data/DeepGlobe/training/images", "data/DeepGlobe/training/groundtruth", transform=transform)
-    # dataset_deepglobe = torch.utils.data.Subset(dataset_deepglobe, range(nb_samples))
-    # print("Samples from DeepGlobe dataset :", nb_samples)
-    # dataset_drive = SatelliteDataset("training/trainingImages", "training/trainingGroundtruth", transform=transform)
-    # print("Samples from Drive dataset :", len(dataset_drive))
-    # dataset_final = SatelliteDataset("final_data/images", "final_data/groundtruths", transform=transform)
 
-
-    # dataset = torch.utils.data.ConcatDataset([dataset, augmented_dataset1])
-    # dataset = torch.utils.data.ConcatDataset([dataset, augmented_dataset2])
+    dataset = torch.utils.data.ConcatDataset([dataset, augmented_dataset1])
+    dataset = torch.utils.data.ConcatDataset([dataset, augmented_dataset2])
 
      # Define the K-fold Cross Validator
     kfold = KFold(n_splits=k_folds, shuffle=True)
@@ -119,19 +109,24 @@ def train(model,batch_size=8, epochs=50, lr=1e-4,nb_samples_mit=0,nb_samples = 0
             train_losses.append(train_epoch_loss)
             print(f"Epoch {epoch}/{epochs - 1} - Training Loss: {train_epoch_loss:.4f}")            
             current_loss = 0.0
-            print('Time for epoch: %.3f' % (time.time() - start_time))
+            print('Time for epoch: %.3fs' % (time.time() - start_time))
             
             # Perform validation with eval mode
             network.eval()
             val_losses = []
-            val_loss = 0.0
+            val_loss,val_samples = 0.0, 0
             val_preds = []
             val_targets = []
+
             for inputs, labels in val_dataloader:
                 inputs, labels = inputs.to(device), labels.to(device)
-                outputs = network(inputs)
-                val_targets.append((labels>0.5).float())
-                val_preds.append((outputs > 0.5).float())
+                with torch.set_grad_enabled(False):
+                    outputs = network(inputs)
+                    loss = calc_loss(outputs, labels,loss_name)
+                    val_loss += loss.item() * inputs.size(0)
+                    val_samples += inputs.size(0)
+                    val_targets.append((labels>0.5))
+                    val_preds.append((outputs > 0.5))
 
             # Calculate and print F1 score at the end of each validation phase
             val_f1_score = f1_score(
@@ -139,32 +134,32 @@ def train(model,batch_size=8, epochs=50, lr=1e-4,nb_samples_mit=0,nb_samples = 0
                 torch.cat(val_preds).view(-1).cpu().numpy(),
                 average='binary'
             )
-            val_epoch_loss = val_loss / len(val_dataloader)
+            val_epoch_loss = val_loss / val_samples
             val_losses.append(val_epoch_loss)
-            print(f"Epoch {epoch}/{epochs - 1} - Validation Loss: {val_epoch_loss:.4f}, F1 Score: {val_f1_score:.4f}")
+            iou_score = IoU(torch.cat(val_targets).view(-1).cpu().numpy()
+                            ,torch.cat(val_preds).view(-1).cpu().numpy() )
+             
+            print(f"Epoch {epoch}/{epochs - 1} - Validation Loss: {val_epoch_loss:.4f}, F1 Score: {val_f1_score:.4f}, IoU score: { iou_score:.4f}")
         # Saving the model
         save_path = os.path.join(savepath, 'fold-{fold}.pth')
         torch.save(network.state_dict(), save_path) 
 
         # Evaluationfor this fold
         network.eval()
-        correct, total = 0, 0
+        targets , predicted = [] , []
+        
         with torch.no_grad():
             # Iterate over the test data and generate predictions
             for i, data in tqdm(enumerate(val_dataloader, 0)):
-                inputs, targets = data # Get inputs
-                inputs, targets = inputs.to(device), targets.to(device) # Transfer to GPU
+                inputs, labels = data # Get inputs
+                inputs, labels = inputs.to(device), labels.to(device) # Transfer to GPU
                 outputs = network(inputs) # Generate outputs
-                outputs = (outputs > 0.5).float() * 1 # Threshold the outputs to obtain binary predictions
-                targets = (targets > 0.5).float() * 1 # Convert targets to binary values
-                _, predicted = torch.max(outputs.data, 1) # Set total and correct
-                total += targets.size(0)
-                correct += (predicted == targets).sum().item()
-
-            # f1 = f1_score(targets, predicted, average='binary')
+                predicted.append( (outputs > 0.5) ) # Threshold the outputs to obtain binary predictions
+                targets.append((labels > 0.5) )# Convert targets to binary values
+                
             f1 = f1_score(
-                targets.view(-1).cpu().numpy(),
-                predicted.view(-1).cpu().numpy(),
+                torch.cat(targets).view(-1).cpu().numpy(),
+                torch.cat(predicted).view(-1).cpu().numpy(),
                 average='binary'
             )
             print('F1 Score for fold %d: %.4f' % (fold, f1))

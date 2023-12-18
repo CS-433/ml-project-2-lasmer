@@ -4,6 +4,7 @@ import numpy as np
 import copy
 import matplotlib.pyplot as plt
 from NLLinkNet.loss import *
+from NLLinkNet.custom_loss import *
 from NLLinkNet.networks.dinknet import *
 from NLLinkNet.networks.unet import *
 from NLLinkNet.networks.nllinknet_location import *
@@ -17,32 +18,59 @@ from torch.optim import lr_scheduler
 from tqdm import tqdm
 import argparse
 from sklearn.metrics import f1_score
+from sklearn.model_selection import KFold
+
 import torch.nn.functional as F
+from PIL import Image
 
 
-def train(batch_size=8, epochs=50, lr=1e-4):
+def train(model,batch_size=8, epochs=50, lr=1e-4,nb_samples_mit=0,nb_samples = 0 ,loss_name="combo"):
     
     ## Define device for training
+    
     device = torch.device("mps" )
     print("Using device: {}".format(device))
     current_time = time.strftime("%Y_%m_%d_%H:%M:%S")
     savepath = "models/"+str(current_time)+".pt"
     ########################################################################################################################################
     ## Create dataset
-    transform = transforms.Compose([transforms.ToTensor(), ]) # Convert PIL Images to tensors # Add any other transforms you need here
+    
+    transform = transforms.Compose([ transforms.ToTensor(), ]) # Convert PIL Images to tensors # Add any other transforms you need here
     dataset = SatelliteDataset("data/training/images", "data/training/groundtruth", transform=transform)
+    print("Samples from original dataset :", len(dataset))
+    augmented_dataset1 = SatelliteDataset("data/augmented/images", "data/augmented/ground_truth", transform=transform)
+    print("Samples from augmented dataset :", len(augmented_dataset1))
+    augmented_dataset2 = SatelliteDataset("data/augmented/augmented_images", "data/augmented/augmented_ground_truth", transform=transform)
+    print("Samples from augmented dataset :", len(augmented_dataset2))
     dataset_mit = SatelliteDataset("data/MIT/training/images", "data/MIT/training/groundtruth", transform=transform)
-    dataset_mit = torch.utils.data.Subset(dataset_mit, range(400))
-    
-    
-    ########################################################################################################################################
-    ## Splitting dataset into train and validation sets
-    train_size = int(0.8 * len(dataset))
-    val_size = len(dataset) - train_size
-    train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
-    train_dataset = torch.utils.data.ConcatDataset([train_dataset, dataset_mit])
-    print("Training set size: {}".format(len(train_dataset)))
+    dataset_mit = torch.utils.data.Subset(dataset_mit, range(nb_samples_mit))
+    print("Samples from MIT dataset :", nb_samples_mit)
+    dataset_deepglobe = SatelliteDataset("data/DeepGlobe/training/images", "data/DeepGlobe/training/groundtruth", transform=transform)
+    dataset_deepglobe = torch.utils.data.Subset(dataset_deepglobe, range(nb_samples))
+    print("Samples from DeepGlobe dataset :", nb_samples)
 
+    dataset_drive = SatelliteDataset("training/trainingImages", "training/trainingGroundtruth", transform=transform)
+    print("Samples from Drive dataset :", len(dataset_drive))
+    dataset_final = SatelliteDataset("final_data/images", "final_data/groundtruths", transform=transform)
+
+    ########################################################################################################################################
+    # train_dataset = torch.utils.data.ConcatDataset([dataset, dataset_mit])
+    # train_dataset = torch.utils.data.ConcatDataset([train_dataset, dataset_deepglobe])
+    # train_dataset = torch.utils.data.ConcatDataset([dataset, dataset_drive])
+    # train_dataset = torch.utils.data.ConcatDataset([train_dataset, dataset_mit])
+    # train_dataset = torch.utils.data.ConcatDataset([train_dataset, dataset_deepglobe])
+    # val_dataset = SatelliteDataset("training/validationImages", "training/validationGroundtruth", transform=transform)
+    
+    # dataset = torch.utils.data.ConcatDataset([dataset, dataset_final])
+    dataset = torch.utils.data.ConcatDataset([dataset, augmented_dataset1])
+    dataset = torch.utils.data.ConcatDataset([dataset, augmented_dataset2])
+
+    ## Splitting dataset into train and validation sets
+    train_size = int(0.9 * len(dataset))
+    val_size = len(dataset) - train_size
+    print("Training set size: {}".format(train_size))
+    train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+    
     ########################################################################################################################################
     ## Create DataLoaders for train and validation sets
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -51,14 +79,7 @@ def train(batch_size=8, epochs=50, lr=1e-4):
     
     ########################################################################################################################################
     ## Create model
-    # model = DinkNet34(num_classes=1).to(device)
-    # model = LinkNet34(num_classes=1).to(device)
-    # model = Baseline(num_classes=1).to(device)
-    # model = NL3_LinkNet(num_classes=1).to(device)
-    # model = NL34_LinkNet(num_classes=1).to(device)
-    model = NL_LinkNet_EGaussian(num_classes=1).to(device)
-    # model = NL_LinkNet_Gaussian(num_classes=1).to(device)
-    
+    model = model.to(device)
     
     ########################################################################################################################################
     #Optimoizer and loss function
@@ -66,7 +87,7 @@ def train(batch_size=8, epochs=50, lr=1e-4):
     # optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=1e-5)
     scheduler = lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.9)
     # scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=5, verbose=True)
-    calc_loss = dice_bce_loss()
+    calc_loss = CustomLoss(beta=0.8)
 
     ########################################################################################################################################
     best_loss = 1e10
@@ -89,19 +110,14 @@ def train(batch_size=8, epochs=50, lr=1e-4):
             inputs = inputs.to(device)
             labels = labels.to(device)
             optimizer.zero_grad()
-            
-            #Models expect input images to be divisible by 32 so we pad the input images
-            inputs = F.pad(inputs, (8, 8, 8, 8))  # Pad inputs
-            labels = F.pad(labels, (8, 8, 8, 8))  # Crop labels
-            
+
             with torch.set_grad_enabled(True):
                 outputs = model(inputs)  # Pad inputs
-                loss = calc_loss(outputs, labels)  # Crop labels
+                loss = calc_loss(outputs, labels,loss_name)  # Crop labels
                 loss.backward()
                 optimizer.step()
-
-        train_loss += loss.item() * inputs.size(0)
-        train_samples += inputs.size(0)
+                train_loss += loss.item() * inputs.size(0)
+                train_samples += inputs.size(0)
 
         train_epoch_loss = train_loss / train_samples
         train_losses.append(train_epoch_loss)
@@ -112,30 +128,32 @@ def train(batch_size=8, epochs=50, lr=1e-4):
         model.eval()
         val_loss = 0.0
         val_samples = 0
-
+        val_preds,val_targets = []
         for inputs, labels in val_dataloader:
-            inputs = F.pad(inputs, (8, 8, 8, 8),value=0)  # Pad inputs
-            labels = F.pad(labels, (8, 8, 8, 8),value=0)  # Crop labels
             inputs = inputs.to(device)
             labels = labels.to(device)
-            labels = labels > 0.5
-            labels = labels.float()
             
             with torch.set_grad_enabled(False):
                 outputs = model(inputs)
-                loss = calc_loss(outputs, labels)
+                loss = calc_loss(outputs, labels,loss_name)
+                val_loss += loss.item() * inputs.size(0)
+                val_samples += inputs.size(0)
+                val_preds.append(outputs > 0.5)  # Threshold predictions
+                val_targets.append(labels >0.5)
 
-        val_loss += loss.item() * inputs.size(0)
-        val_samples += inputs.size(0)
         # Store predictions and labels
-        preds = (outputs > 0.5).view(-1).cpu().numpy()  # Flatten and threshold predictions
-        labels_flat = labels.view(-1).cpu().numpy()  # Flatten labels
-        val_f1_score = f1_score(labels_flat, preds, average='binary')
-        print("IoU score: {:.4f}".format(IoU(preds,labels_flat)))
+
+        val_epoch_loss = val_loss / val_samples
+        val_losses.append(val_epoch_loss)
+        val_preds = torch.cat(val_preds).view(-1).cpu().numpy()
+        val_targets = torch.cat(val_targets).view(-1).cpu().numpy()
+        val_f1_score = f1_score(val_targets, val_preds, average='binary')
+
+        print("IoU score: {:.4f}".format(IoU(val_targets, val_preds)))
         print("F1 score: {:.4f}".format(val_f1_score))
 
-        val_labels_all.extend(labels_flat)
-        val_preds_all.extend(preds)
+        val_labels_all.extend(val_targets)
+        val_preds_all.extend(val_preds)
 
         scheduler.step()
         val_epoch_loss = val_loss / val_samples
@@ -164,14 +182,37 @@ def plot(train_losses,val_losses):
     plt.ylabel("Loss")
     plt.show()
 
+
+# Define a dictionary mapping model type names to model classes
+model_dict = {
+    'dinknet34': DinkNet34,
+    'linknet34': LinkNet34,
+    'baseline': Baseline,
+    'nl3_linknet': NL3_LinkNet,
+    'nl34_linknet': NL34_LinkNet,
+    'nl_linknet_egaussian': NL_LinkNet_EGaussian,
+    'nl_linknet_gaussian': NL_LinkNet_Gaussian
+}
+
+
 if __name__ == "__main__":
+
     parser = argparse.ArgumentParser(description='Train a model for road segmentation.')
     parser.add_argument('--batch_size', type=int, default=8, help='input batch size for training (default: 8)')
-    parser.add_argument('--epochs', type=int, default=20, help='number of epochs to train (default: 50)')
-    parser.add_argument('--lr', type=float, default=1e-4, help='learning rate (default: 1e-4)')
+    parser.add_argument('--epochs', type=int, default=70, help='number of epochs to train (default: 70)')
+    parser.add_argument('--lr', type=float, default=3e-4, help='learning rate (default: 3e-4)')
+    parser.add_argument("--model", type=str, default="nl34_linknet", choices=model_dict.keys(), help="Model to train: e.g: dinknet / linknet / baseline / nl3_linknet / nl34_linknet / nl_linknet_egaussian / nl_linknet_gaussian")
+    parser.add_argument("--mit", type=int, default=0, help="Number of samples from MIT dataset to add to training set")
+    parser.add_argument("--deepglobe", type=int, default=0, help="Number of samples from DeepGlobe dataset to add to training set")
+    parser.add_argument("--loss", type=str, default="combo", help="Loss function to use: e.g: dice_bce / focal_loss / dice_focal_loss")
 
+    
     args = parser.parse_args()
+    
+    # Instantiate the selected model
+    ModelClass = model_dict[args.model]
+    model = ModelClass(num_classes=1)
 
-    model,train_losses,val_losses = train(epochs=args.epochs, lr=args.lr, batch_size=args.batch_size)
+    model,train_losses,val_losses = train(model,epochs=args.epochs, lr=args.lr, batch_size=args.batch_size,nb_samples = args.deepglobe,loss_name=args.loss,nb_samples_mit=args.mit)
     plot(train_losses,val_losses)
     
