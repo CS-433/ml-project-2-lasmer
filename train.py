@@ -1,27 +1,25 @@
 from helpers import *
-import os
-import numpy as np
 import copy
 import matplotlib.pyplot as plt
-from NLLinkNet.loss import *
-from NLLinkNet.custom_loss import *
-from NLLinkNet.networks.dinknet import *
-from NLLinkNet.networks.unet import *
-from NLLinkNet.networks.nllinknet_location import *
-from NLLinkNet.networks.nllinknet_pairwise_func import *
+
+from Networks.common.custom_loss import *
+from Networks.dinknet import *
+from Networks.nllinknet_location import *
+from Networks.nllinknet_pairwise_func import *
+from Networks.unet import *
+
+
 
 from Loader import *
 import time
 from torch.utils.data import random_split
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import  DataLoader
 from torch.optim import lr_scheduler
 from tqdm import tqdm
 import argparse
 from sklearn.metrics import f1_score
-from sklearn.model_selection import KFold
 
-import torch.nn.functional as F
-from PIL import Image
+
 
 
 def train(model,batch_size=8, epochs=50, lr=1e-4,nb_samples_mit=0,nb_samples = 0 ,loss_name="combo"):
@@ -64,9 +62,10 @@ def train(model,batch_size=8, epochs=50, lr=1e-4,nb_samples_mit=0,nb_samples = 0
     # dataset = torch.utils.data.ConcatDataset([dataset, dataset_final])
     dataset = torch.utils.data.ConcatDataset([dataset, augmented_dataset1])
     dataset = torch.utils.data.ConcatDataset([dataset, augmented_dataset2])
+    
 
     ## Splitting dataset into train and validation sets
-    train_size = int(0.9 * len(dataset))
+    train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
     print("Training set size: {}".format(train_size))
     train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
@@ -128,7 +127,7 @@ def train(model,batch_size=8, epochs=50, lr=1e-4,nb_samples_mit=0,nb_samples = 0
         model.eval()
         val_loss = 0.0
         val_samples = 0
-        val_preds,val_targets = []
+        val_preds,val_targets = [], []
         for inputs, labels in val_dataloader:
             inputs = inputs.to(device)
             labels = labels.to(device)
