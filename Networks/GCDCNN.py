@@ -251,4 +251,4 @@ class GCDCNN(nn.Module):
         x = self.rb3(x)
 
         logits = self.outc(x)
-        return logits
+        return torch.sigmoid(logits)

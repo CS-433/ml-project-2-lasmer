@@ -23,30 +23,20 @@ class SatelliteDataset(Dataset):
     def __getitem__(self, idx):
         img_name = os.path.join(self.images_dir, self.images[idx])
         image = mpimg.imread(img_name)
-        if image.shape[0] != 608 or image.shape[1] != 608:
-            image = Image.open(img_name)
-            image = image.resize((608, 608))
-            image = np.array(image) 
+        #if image.shape[0] != 608 or image.shape[1] != 608:
+        #    image = Image.open(img_name)
+        #    image = image.resize((608, 608))
+        #    image = np.array(image) 
 
         ground_truth_name = os.path.join(self.ground_truth_dir, self.images[idx])
-        try:
-            ground_truth = mpimg.imread(ground_truth_name)
-        except FileNotFoundError:
-            try :
-                ground_truth_name = ground_truth_name.replace("image", "labels")
-                ground_truth = mpimg.imread(ground_truth_name)
-            except :
-                try : 
-                    ground_truth_name = ground_truth_name.replace("image", "ground_truth", 1)
-                    ground_truth = mpimg.imread(ground_truth_name)
-                except :
-                    ground_truth_name = ground_truth_name.replace("sat", "label")
-                    ground_truth = mpimg.imread(ground_truth_name)
+        ground_truth_name = ground_truth_name.replace("_image_", "_ground_truth_")
+        ground_truth = mpimg.imread(ground_truth_name)
+            
 
-        if ground_truth.shape[0] != 608 or ground_truth.shape[1] != 608:
-            ground_truth = Image.open(ground_truth_name)
-            ground_truth = ground_truth.resize((608, 608))
-            ground_truth = np.array(ground_truth)
+        #if ground_truth.shape[0] != 608 or ground_truth.shape[1] != 608:
+        #    ground_truth = Image.open(ground_truth_name)
+        #    ground_truth = ground_truth.resize((608, 608))
+        #    ground_truth = np.array(ground_truth)
 
         if self.transform:
             image = self.transform(image)

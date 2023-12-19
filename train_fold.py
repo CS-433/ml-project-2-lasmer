@@ -3,184 +3,21 @@ import os
 import numpy as np
 import copy
 import matplotlib.pyplot as plt
-from NLLinkNet.loss import *
-from NLLinkNet.custom_loss import *
-from NLLinkNet.networks.dinknet import *
-from NLLinkNet.networks.unet import *
-from NLLinkNet.networks.nllinknet_location import *
-from NLLinkNet.networks.nllinknet_pairwise_func import *
+from Networks.common.custom_loss import *
+from Networks.dinknet import *
+from Networks.UNet import *
+from Networks.GCDCNN import *
+from Networks.nllinknet_location import *
+from Networks.nllinknet_pairwise_func import *
 
 from Loader import *
 import time
-from torch.utils.data import random_split
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 from torch.optim import lr_scheduler
 from tqdm import tqdm
 import argparse
 from sklearn.metrics import f1_score
 from sklearn.model_selection import KFold
-
-import torch.nn.functional as F
-from PIL import Image
-
-def reset_weights(m):
-  '''
-    Try resetting model weights to avoid
-    weight leakage.
-  '''
-  for layer in m.children():
-   if hasattr(layer, 'reset_parameters'):
-    layer.reset_parameters()
-
-def train(model,batch_size=8, epochs=50, lr=1e-4,nb_samples_mit=0,nb_samples = 0 ,loss_name="combo",k_folds=5):
-    
-    ## Define device for training
-    device = torch.device("mps" )
-    print("Using device: {}".format(device))
-    ########################################################################################################################################
-    model = model.to(device) ## Create mode 
-    calc_loss = CustomLoss(beta=0.8) # Define loss function
-    current_time = time.strftime("%Y_%m_%d_%H:%M:%S")
-    savepath = os.path.join( "./models", str(current_time))
-    os.makedirs(savepath, exist_ok=True)
-
-    ########################################################################################################################################
-    ## Create dataset
-    
-    transform = transforms.Compose([ transforms.ToTensor(), ]) # Convert PIL Images to tensors # Add any other transforms you need here
-    dataset = SatelliteDataset("data/training/images", "data/training/groundtruth", transform=transform)
-    print("Samples from original dataset :", len(dataset))
-    augmented_dataset1 = SatelliteDataset("data/augmented/images", "data/augmented/ground_truth", transform=transform)
-    print("Samples from augmented dataset :", len(augmented_dataset1))
-    augmented_dataset2 = SatelliteDataset("data/augmented/augmented_images", "data/augmented/augmented_ground_truth", transform=transform)
-    print("Samples from augmented dataset :", len(augmented_dataset2))
-    
-
-    dataset = torch.utils.data.ConcatDataset([dataset, augmented_dataset1])
-    dataset = torch.utils.data.ConcatDataset([dataset, augmented_dataset2])
-
-     # Define the K-fold Cross Validator
-    kfold = KFold(n_splits=k_folds, shuffle=True)
-    results = {}
-  
-    # K-fold Cross Validation model evaluation
-    for fold, (train_ids, test_ids) in enumerate(kfold.split(dataset)):
-        # Print
-        print(f'FOLD {fold}/{k_folds-1}')
-        print('--------------------------------')
-        # Sample elements randomly from a given list of ids, no replacement.
-        train_subsampler = torch.utils.data.SubsetRandomSampler(train_ids)
-        test_subsampler = torch.utils.data.SubsetRandomSampler(test_ids)
-
-        # Define data loaders for training and testing data in this fold
-        train_dataloader = DataLoader(dataset, batch_size=batch_size,sampler=train_subsampler)
-        val_dataloader = DataLoader(dataset, batch_size=batch_size,sampler=test_subsampler)
-        
-        # Init the neural network
-        network = model.to(device) # Move network to GPU if available
-        network.apply(reset_weights)
-        network.train() # Set network in training mode
-        # Initialize optimizer
-        
-        optimizer = torch.optim.Adam(network.parameters(), lr=lr)     # Optimizer 
-        scheduler = lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.9) # Scheduler for learning rate decay
-        
-        # Run the training loop for defined number of epochs
-        train_losses = []
-        for epoch in tqdm(range(epochs),desc ="Training"):
-            print(f'Starting epoch {epoch+1}')
-            start_time = time.time()
-            current_loss = 0.0 # Set current loss value
-
-            # Iterate over the DataLoader for training data
-            for i, data in tqdm(enumerate(train_dataloader, 0)):
-                inputs, targets = data # Get inputs
-                inputs, targets = inputs.to(device), targets.to(device) # Transfer to GPU
-                optimizer.zero_grad() # Zero the gradients
-                outputs = network(inputs) # Perform forward pass
-                loss = calc_loss(outputs, targets,loss_name) # Compute loss
-                loss.backward() # Perform backward pass
-                optimizer.step() # Perform optimization
-            
-                # Print statistics
-                current_loss += loss.item()
-                ('Loss after mini-batch %5d: %.3f' % (i + 1, current_loss / 500))
-            train_epoch_loss = current_loss / len(train_dataloader)
-            train_losses.append(train_epoch_loss)
-            print(f"Epoch {epoch}/{epochs - 1} - Training Loss: {train_epoch_loss:.4f}")            
-            current_loss = 0.0
-            print('Time for epoch: %.3fs' % (time.time() - start_time))
-            
-            # Perform validation with eval mode
-            network.eval()
-            val_losses = []
-            val_loss,val_samples = 0.0, 0
-            val_preds = []
-            val_targets = []
-
-            for inputs, labels in val_dataloader:
-                inputs, labels = inputs.to(device), labels.to(device)
-                with torch.set_grad_enabled(False):
-                    outputs = network(inputs)
-                    loss = calc_loss(outputs, labels,loss_name)
-                    val_loss += loss.item() * inputs.size(0)
-                    val_samples += inputs.size(0)
-                    val_targets.append((labels>0.5))
-                    val_preds.append((outputs > 0.5))
-
-            # Calculate and print F1 score at the end of each validation phase
-            val_f1_score = f1_score(
-                torch.cat(val_targets).view(-1).cpu().numpy(),
-                torch.cat(val_preds).view(-1).cpu().numpy(),
-                average='binary'
-            )
-            val_epoch_loss = val_loss / val_samples
-            val_losses.append(val_epoch_loss)
-            iou_score = IoU(torch.cat(val_targets).view(-1).cpu().numpy()
-                            ,torch.cat(val_preds).view(-1).cpu().numpy() )
-             
-            print(f"Epoch {epoch}/{epochs - 1} - Validation Loss: {val_epoch_loss:.4f}, F1 Score: {val_f1_score:.4f}, IoU score: { iou_score:.4f}")
-        # Saving the model
-        save_path = os.path.join(savepath, 'fold-{fold}.pth')
-        torch.save(network.state_dict(), save_path) 
-
-        # Evaluationfor this fold
-        network.eval()
-        targets , predicted = [] , []
-        
-        with torch.no_grad():
-            # Iterate over the test data and generate predictions
-            for i, data in tqdm(enumerate(val_dataloader, 0)):
-                inputs, labels = data # Get inputs
-                inputs, labels = inputs.to(device), labels.to(device) # Transfer to GPU
-                outputs = network(inputs) # Generate outputs
-                predicted.append( (outputs > 0.5) ) # Threshold the outputs to obtain binary predictions
-                targets.append((labels > 0.5) )# Convert targets to binary values
-                
-            f1 = f1_score(
-                torch.cat(targets).view(-1).cpu().numpy(),
-                torch.cat(predicted).view(-1).cpu().numpy(),
-                average='binary'
-            )
-            print('F1 Score for fold %d: %.4f' % (fold, f1))
-            print('--------------------------------')
-            results[fold] = f1
-        scheduler.step() # Perform learning rate decay
-
-    # Print fold results
-    print(f'K-FOLD CROSS VALIDATION RESULTS FOR {k_folds} FOLDS')
-    print('--------------------------------')
-    sum = 0.0
-    for key, value in results.items():
-        print(f'Fold {key}: {value} %')
-        sum += value
-    print(f'Average: {sum/len(results.items())} %')
-
-    return network
-    
-
-    
-
 
 # Define a dictionary mapping model type names to model classes
 model_dict = {
@@ -190,28 +27,119 @@ model_dict = {
     'nl3_linknet': NL3_LinkNet,
     'nl34_linknet': NL34_LinkNet,
     'nl_linknet_egaussian': NL_LinkNet_EGaussian,
-    'nl_linknet_gaussian': NL_LinkNet_Gaussian
+    'nl_linknet_gaussian': NL_LinkNet_Gaussian,
+    'UNet': UNet,
+    'GCDCNN': GCDCNN
 }
 
+def reset_weights(m):
+    '''
+    Try resetting model weights to avoid weight leakage.
+    '''
+    if hasattr(m, 'reset_parameters'):
+        m.reset_parameters()
+
+def train_kfold(model_class, batch_size=8, epochs=50, lr=1e-4, loss_name="combo", k_folds=5):
+    # Device configuration
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print("Using device: {}".format(device))
+    
+    # Create dataset
+    transform = transforms.Compose([transforms.ToTensor()])
+    dataset = SatelliteDataset("training/608by608Images", "training/608by608LabelsBW", transform=transform)
+    print("Samples from dataset:", len(dataset))
+
+    # K-fold Cross Validation
+    kfold = KFold(n_splits=k_folds, shuffle=True)
+    fold_results = {}
+
+    for fold, (train_ids, test_ids) in enumerate(kfold.split(dataset)):
+        print(f'FOLD {fold}')
+        print('--------------------------------')
+
+        # DataLoaders for the current fold
+        train_subsampler = torch.utils.data.SubsetRandomSampler(train_ids)
+        test_subsampler = torch.utils.data.SubsetRandomSampler(test_ids)
+        train_dataloader = DataLoader(dataset, batch_size=batch_size, sampler=train_subsampler)
+        val_dataloader = DataLoader(dataset, batch_size=batch_size, sampler=test_subsampler)
+
+        # Initialize model for current fold
+        model = model_class(num_classes=1).to(device)
+        model.apply(reset_weights)
+
+        # Loss function and optimizer
+        optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+        scheduler = lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.9)
+        calc_loss = CustomLoss(beta=0.8)
+
+        for epoch in range(epochs):
+            # Training phase
+            model.train()
+            train_loss = 0.0
+
+            for inputs, labels in tqdm(train_dataloader, desc="Training"):
+                inputs, labels = inputs.to(device), labels.to(device)
+                optimizer.zero_grad()
+                outputs = model(inputs)
+                loss = calc_loss(outputs, labels, loss_name)
+                loss.backward()
+                optimizer.step()
+                train_loss += loss.item() * inputs.size(0)
+
+            train_epoch_loss = train_loss / len(train_ids)
+
+            # Validation phase
+            model.eval()
+            val_loss = 0.0
+            val_preds, val_labels = [], []
+
+            for inputs, labels in val_dataloader:
+                inputs, labels = inputs.to(device), labels.to(device)
+                with torch.no_grad():
+                    outputs = model(inputs)
+                    loss = calc_loss(outputs, labels, loss_name)
+                    val_loss += loss.item() * inputs.size(0)
+                    val_preds.append(outputs > 0.5)
+                    val_labels.append(labels > 0.5)
+
+            val_epoch_loss = val_loss / len(test_ids)
+            val_f1_score = f1_score(
+                torch.cat(val_labels).view(-1).cpu().numpy(),
+                torch.cat(val_preds).view(-1).cpu().numpy(),
+                average='binary'
+            )
+            
+            print(f"Fold {fold}, Epoch {epoch}, Training Loss: {train_epoch_loss:.4f}, Validation Loss: {val_epoch_loss:.4f}, Validation F1: {val_f1_score:.4f}")
+
+            scheduler.step()
+
+        # Save the model for the current fold
+        fold_savepath = os.path.join("models", f"model_fold_{fold}.pt")
+        torch.save(model.state_dict(), fold_savepath)
+
+        # Record the performance of this fold
+        fold_results[fold] = val_f1_score
+
+    # Print fold results
+    print(f'K-FOLD CROSS VALIDATION RESULTS FOR {k_folds} FOLDS')
+    print('--------------------------------')
+    for key, value in fold_results.items():
+        print(f'Fold {key}: F1 Score {value}')
+    avg_f1 = sum(fold_results.values()) / len(fold_results)
+    print(f'Average F1 Score: {avg_f1}')
+
+    return fold_results
 
 if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser(description='Train a model for road segmentation.')
+    parser = argparse.ArgumentParser(description='Train a model with k-fold cross validation for road segmentation.')
     parser.add_argument('--batch_size', type=int, default=8, help='input batch size for training (default: 8)')
     parser.add_argument('--epochs', type=int, default=70, help='number of epochs to train (default: 70)')
     parser.add_argument('--lr', type=float, default=3e-4, help='learning rate (default: 3e-4)')
-    parser.add_argument("--model", type=str, default="nl34_linknet", choices=model_dict.keys(), help="Model to train: e.g: dinknet / linknet / baseline / nl3_linknet / nl34_linknet / nl_linknet_egaussian / nl_linknet_gaussian")
-    parser.add_argument("--mit", type=int, default=0, help="Number of samples from MIT dataset to add to training set")
-    parser.add_argument("--deepglobe", type=int, default=0, help="Number of samples from DeepGlobe dataset to add to training set")
-    parser.add_argument("--loss", type=str, default="combo", help="Loss function to use: e.g: dice_bce / focal_loss / dice_focal_loss")
+    parser.add_argument("--model", type=str, default="nl34_linknet", choices=model_dict.keys(), help="Model to train")
+    parser.add_argument("--loss", type=str, default="combo", help="Loss function to use")
     parser.add_argument("--k_folds", type=int, default=5, help="Number of folds for k-fold cross validation")
     
     args = parser.parse_args()
     
-    # Instantiate the selected model
     ModelClass = model_dict[args.model]
-    model = ModelClass(num_classes=1)
-
-    train(model,epochs=args.epochs, lr=args.lr, batch_size=args.batch_size,nb_samples = args.deepglobe,loss_name=args.loss,nb_samples_mit=args.mit,k_folds=args.k_folds)
-    
-    
+    train_kfold(ModelClass, epochs=args.epochs, lr=args.lr, batch_size=args.batch_size, loss_name=args.loss, k_folds=args.k_folds)

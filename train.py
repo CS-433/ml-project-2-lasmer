@@ -35,20 +35,17 @@ def train(model,batch_size=8, epochs=50, lr=1e-4,nb_samples_mit=0,nb_samples = 0
     print("Using device: {}".format(device))
     current_time = time.strftime("%Y_%m_%d_%H:%M:%S")
     savepath = "models/"+str(current_time)+".pt"
+    os.makedirs(os.path.dirname(savepath), exist_ok=True)
+
     ########################################################################################################################################
     ## Create dataset
     
     transform = transforms.Compose([ transforms.ToTensor(), ]) # Convert PIL Images to tensors # Add any other transforms you need here
-    dataset = SatelliteDataset("data/training/images", "data/training/groundtruth", transform=transform)
-    print("Samples from dataset :", len(dataset))
+    train_dataset = SatelliteDataset("training/final_training_images", "training/final_training_labels", transform=transform)
+    val_dataset = SatelliteDataset("training/final_validation_images", "training/final_validation_labels", transform=transform)
 
-    ########################################################################################################################################
-
-    ## Splitting dataset into train and validation sets
-    train_size = int(0.9 * len(dataset))
-    val_size = len(dataset) - train_size
-    print("Training set size: {}".format(train_size))
-    train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+    print("length of the training dataset :", len(train_dataset))
+    print("length of the validation dataset :", len(val_dataset))
     
     ########################################################################################################################################
     ## Create DataLoaders for train and validation sets
@@ -78,8 +75,8 @@ def train(model,batch_size=8, epochs=50, lr=1e-4,nb_samples_mit=0,nb_samples = 0
     # Add variables to store all labels and predictions for F1 calculation
     val_labels_all, val_preds_all = [], []
 
-    for epoch in tqdm(range(epochs),desc="Training"):
-        print('-' * 100,'Epoch {}/{}\n'.format(epoch, epochs - 1))
+    for epoch in range(epochs):
+        print('-' * 20,'Epoch {}/{}\n'.format(epoch, epochs - 1))
         since = time.time()
         ########################################################################################################################################
         # Training phase
@@ -87,7 +84,7 @@ def train(model,batch_size=8, epochs=50, lr=1e-4,nb_samples_mit=0,nb_samples = 0
         train_loss = 0.0
         train_samples = 0
 
-        for inputs, labels in tqdm(train_dataloader):
+        for inputs, labels in tqdm(train_dataloader,desc="Training Batches"):
             inputs = inputs.to(device)
             labels = labels.to(device)
             optimizer.zero_grad()
@@ -109,8 +106,9 @@ def train(model,batch_size=8, epochs=50, lr=1e-4,nb_samples_mit=0,nb_samples = 0
         model.eval()
         val_loss = 0.0
         val_samples = 0
-        val_preds,val_targets = []
-        for inputs, labels in val_dataloader:
+        val_preds = []
+        val_targets = []
+        for inputs, labels in tqdm(val_dataloader, desc="Validation Batches"):
             inputs = inputs.to(device)
             labels = labels.to(device)
             
@@ -144,6 +142,7 @@ def train(model,batch_size=8, epochs=50, lr=1e-4,nb_samples_mit=0,nb_samples = 0
     
 
         # Check if this is the best model so far
+        
         if  best_f1_score < val_f1_score:
             best_f1_score = val_f1_score
             save_model(model, savepath=savepath)
@@ -165,8 +164,10 @@ def plot(train_losses,val_losses):
     plt.show()
 
 def save_losses(train_losses, val_losses, f1_scores, savepath):
+    losses_path = savepath + ".csv"
+    os.makedirs(os.path.dirname(losses_path), exist_ok=True)
     losses = np.array([train_losses, val_losses, f1_scores])
-    np.savetxt(savepath + ".csv", losses, delimiter=",")
+    np.savetxt(losses_path, losses, delimiter=",")
     
 # Define a dictionary mapping model type names to model classes
 model_dict = {

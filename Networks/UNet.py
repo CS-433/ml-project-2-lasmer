@@ -137,4 +137,4 @@ class UNet(nn.Module):
         x = self.dc9(x)
 
         logits = self.outc(x)
-        return logits
+        return torch.sigmoid(logits)
