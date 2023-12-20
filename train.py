@@ -34,8 +34,8 @@ def train(model,batch_size=8, epochs=50, lr=1e-4,nb_samples_mit=0,nb_samples = 0
     
     print("Using device: {}".format(device))
     current_time = time.strftime("%Y_%m_%d_%H:%M:%S")
-    savepath = "models/"+str(current_time)+".pt"
-    os.makedirs(os.path.dirname(savepath), exist_ok=True)
+    savepath = "models"
+    os.makedirs(savepath, exist_ok=True)
 
     ########################################################################################################################################
     ## Create dataset
@@ -61,7 +61,7 @@ def train(model,batch_size=8, epochs=50, lr=1e-4,nb_samples_mit=0,nb_samples = 0
     #Optimoizer and loss function
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     # optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=1e-5)
-    scheduler = lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.9)
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.95)
     # scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=5, verbose=True)
     calc_loss = CustomLoss(beta=0.8)
 
@@ -137,7 +137,6 @@ def train(model,batch_size=8, epochs=50, lr=1e-4,nb_samples_mit=0,nb_samples = 0
 
         scheduler.step()
         val_epoch_loss = val_loss / val_samples
-        val_losses.append(val_epoch_loss)
         print("Validation Loss: {:.4f}".format(val_epoch_loss))
     
 
@@ -145,7 +144,7 @@ def train(model,batch_size=8, epochs=50, lr=1e-4,nb_samples_mit=0,nb_samples = 0
         
         if  best_f1_score < val_f1_score:
             best_f1_score = val_f1_score
-            save_model(model, savepath=savepath)
+            save_model(model, savepath=savepath, model_name="best_model.pt")
             print("New best model {} saved with f1 score: {:.4f}".format(savepath, best_f1_score))
         # Print time elapsed for this epoch
         time_elapsed = time.time() - since
@@ -164,10 +163,13 @@ def plot(train_losses,val_losses):
     plt.show()
 
 def save_losses(train_losses, val_losses, f1_scores, savepath):
-    losses_path = savepath + ".csv"
+    losses_path = os.path.join(savepath, "losses.csv")
     os.makedirs(os.path.dirname(losses_path), exist_ok=True)
-    losses = np.array([train_losses, val_losses, f1_scores])
-    np.savetxt(losses_path, losses, delimiter=",")
+
+    assert len(train_losses) == len(val_losses) == len(f1_scores), "Length of train_losses, val_losses, and f1_scores must be the same"
+    data_to_save = np.array([train_losses, val_losses, f1_scores]).T
+    np.savetxt(losses_path, data_to_save, delimiter=",", header="Train Loss,Validation Loss,F1 Score", comments="")
+
     
 # Define a dictionary mapping model type names to model classes
 model_dict = {

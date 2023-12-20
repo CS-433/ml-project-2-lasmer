@@ -140,13 +140,12 @@ def load_model( model, savepath="models/"):
     model.load_state_dict(torch.load(savepath))
     return
 
-def save_model( model, savepath="models/"):
-    if savepath is not None: torch.save(model.state_dict(), savepath)
-    else : 
-        savepath = "models/"+str("best_model.pt")
-        torch.save(model.state_dict(), savepath)
-    print("Model saved at: ", savepath)
-    return
+def save_model(model, savepath="models", model_name="best_model.pt"):
+    if not os.path.exists(savepath):
+        os.makedirs(savepath)
+    full_save_path = os.path.join(savepath, model_name)
+    torch.save(model.state_dict(), full_save_path)
+    print(f"Model saved at: {full_save_path}")
 
 def img_to_class(img,foreground_threshold):
     img[img > foreground_threshold] = 1
