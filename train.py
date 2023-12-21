@@ -36,8 +36,9 @@ def train(model,batch_size=8, epochs=50, lr=1e-4 ,loss_name="dice"):
     ########################################################################################################################################
     ## Create dataset
     transform = transforms.Compose([ transforms.ToTensor(), ]) # Convert PIL Images to tensors 
-    train_dataset = SatelliteDataset("data/training/images", "data/training/labels", transform=transform)
-    val_dataset = SatelliteDataset("data/validation/images", "data/validation/labels", transform=transform)
+    resize = False if model in ['UNet','GCDCNN'] else True
+    train_dataset = SatelliteDataset("data/training/images", "data/training/labels", transform=transform,resize=resize)
+    val_dataset = SatelliteDataset("data/validation/images", "data/validation/labels", transform=transform,resize=resize)
 
     print("length of the training dataset :", len(train_dataset))
     print("length of the validation dataset :", len(val_dataset))
