@@ -48,3 +48,17 @@ def save_losses(train_losses, val_losses, f1_scores, savepath):
     os.makedirs(os.path.dirname(losses_path), exist_ok=True)
     losses = np.array([train_losses, val_losses, f1_scores])
     np.savetxt(losses_path, losses, delimiter=",")
+    
+def save_model(model, savepath="models", model_name="best_model.pt"):
+    """Save the model
+    Args:
+        model : Instance trained of model
+        savepath (str) : Path of trained models
+        model_name (str) : Name of file to save model.
+    Returns:
+        None"""
+    if not os.path.exists(savepath):
+        os.makedirs(savepath)
+    full_save_path = os.path.join(savepath, model_name)
+    torch.save(model.state_dict(), full_save_path)
+    print(f"Model saved at: {full_save_path}")
