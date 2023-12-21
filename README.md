@@ -63,13 +63,13 @@ Note:
 We created a file predict.py to compute the final masks.
 When running the script, you can specify which models to use for making predictions. For instance:
 
-To make predictions using only the UNet model (the default setting):\n
-	 python predict.py
-To use both UNet and GCDCNN:\n
-	 python predict.py --use_unet True --use_GCDCNN True
-To use all three models:\n
-	 python predict.py --use_unet True --use_GCDCNN True --use_linknet True
-To use UNet with cropping and TTA:\n
-	 python predict.py --use_crop True --use_TTA True
+To make predictions using only the UNet model (the default setting):<br>
+	 python predict.py<br>
+To use both UNet and GCDCNN:<br>
+	 python predict.py --use_unet True --use_GCDCNN True<br>
+To use all three models:<br>
+	 python predict.py --use_unet True --use_GCDCNN True --use_linknet True<br>
+To use UNet with cropping and TTA:<br>
+	 python predict.py --use_crop True --use_TTA True<br>
 
 
