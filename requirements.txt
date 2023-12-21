@@ -1,3 +1,11 @@
-sklearn
-scikit-image
-torch
+Image==1.5.33
+imageio==2.31.6
+imgaug==0.4.0
+matplotlib==3.8.0
+numpy==1.22.4
+Pillow==10.1.0
+scikit_learn==1.3.2
+torch==2.1.2
+torchvision==0.16.2
+tqdm==4.64.1
+ttach==0.0.3
