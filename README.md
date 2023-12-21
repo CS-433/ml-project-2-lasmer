@@ -48,9 +48,13 @@ To use this project, ensure all dependencies listed in `requirements.txt` are in
 You can run the training scripts (`train.py` or `train_fold.py`) to train the models with your dataset.
 ### Example Commands for Model Training using Unet:
 
-- `python train.py --model UNet --batch_size 8 --epochs 50 --loss dice --lr 3e-4`
+```bash
+python train.py --model UNet --batch_size 8 --epochs 50 --loss dice --lr 3e-4
+```
 
-- `python train_fold.py --k_folds 4 --model UNet --batch_size 8 --epochs 50 --loss dice --lr 3e-4`
+```bash
+python train_fold.py --k_folds 4 --model UNet --batch_size 8 --epochs 50 --loss dice --lr 3e-4
+```
 
 Note: <br>
 - For regular 'train.py': you should have the following structure: <br>
@@ -69,13 +73,21 @@ Note: <br>
 We created a file `predict.py` to compute the final masks.
 When running the script, you can specify which models to use for making predictions. For instance:
 
-- To make predictions using only the UNet model (the default setting):<br>
-     `python predict.py`<br>
-- To use both UNet and GCDCNN:<br>
-   `python predict.py --use_unet True --use_GCDCNN True`<br>
-- To use all three models:<br>
-   `python predict.py --use_unet True --use_GCDCNN True --use_linknet True`<br>
-- To use UNet with cropping and TTA:<br>
-   `python predict.py --use_crop True --use_TTA True`<br>
+- To make predictions using only the UNet model (the default setting):
+     ```bash
+  python predict.py
+     ```
+- To use both UNet and GCDCNN:
+  ```bash
+   python predict.py --use_unet True --use_GCDCNN True
+  ```
+- To use all three models:
+   ```bash
+  python predict.py --use_unet True --use_GCDCNN True --use_linknet True
+   ```
+- To use UNet with cropping and TTA:
+  ```bash
+   python predict.py --use_crop True --use_TTA True
+  ```
 
 
