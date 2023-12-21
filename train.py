@@ -140,19 +140,6 @@ def train(model,batch_size=8, epochs=50, lr=1e-4 ,loss_name="dice"):
     save_losses(train_losses, val_losses, f1_scores, savepath=savepath)
     return model, train_losses, val_losses
 
-def plot(train_losses,val_losses):
-    plt.plot(train_losses)
-    plt.plot(val_losses)
-    plt.legend(["Training Loss", "Validation Loss"])
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss")
-    plt.show()
-
-def save_losses(train_losses, val_losses, f1_scores, savepath):
-    losses_path = savepath + ".csv"
-    os.makedirs(os.path.dirname(losses_path), exist_ok=True)
-    losses = np.array([train_losses, val_losses, f1_scores])
-    np.savetxt(losses_path, losses, delimiter=",")
     
 # Define a dictionary mapping model type names to model classes
 model_dict = {
