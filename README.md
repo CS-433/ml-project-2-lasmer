@@ -52,10 +52,9 @@ cd ml-project-2-lasmer
 ```bash
 pip install -r requirements.txt
 ```
-then do the following.
 
 ### Training Models
-You can run the training scripts (`train.py` or `train_fold.py`) to train the models with your dataset.
+Once everything is set up, you can run the training scripts (`train.py` or `train_fold.py`) to train the models with your dataset.
 ### Example Commands for Model Training using Unet:
 
 ```bash
@@ -79,7 +78,7 @@ Note: <br>
 
 
 
-- For k-fold `train_fold.py`: you do not need validation folder.
+- For k-fold `train_fold.py`: you do not need a validation folder.
 
 ### Predictions
 We created a file `predict.py` to compute the final masks.
