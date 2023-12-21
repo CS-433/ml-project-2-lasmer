@@ -30,7 +30,11 @@ It consists of 100 images of shape 400x400 and their groundtruths.
 
 ### Data Augmentation 
 We provide two augmentation files since the original data is not enough for training. 
-You can use them by running: augment_deterministic.py OR augment_random.py. This will create a new folder data/augmented with the newly created images.
+You can use them by running (one of the following or both)
+-  augment_deterministic.py 
+-  augment_random.py. 
+
+This will create a new folder data/augmented with the newly created images.
 For additional data, you can change NB_AUGMENTATIONS in augment_random.py (by default=3)
 
 ## Addtionnal Data:
@@ -49,14 +53,15 @@ You can run the training scripts (`train.py` or `train_fold.py`) to train the mo
 - python train_fold.py --k_folds 4 --model UNet --batch_size 8 --epochs 50 --loss dice --lr 3e-4 
 
 Note: 
-- For regular train.py: you should have the following structure: <br>
-├─data<br>
-│ └── training<br>
-│	      └── labels<br>
-│ 	      └── images<br>
-│ └── validation<br>
-│	      └── labels<br>
-│ 	      └── images<br>
+For regular train.py: you should have the following structure: <br>
+├─data
+│  └── training
+│  │     └── labels
+│  │     └── images
+│  └── validation
+│       └── labels
+│       └── images
+
 
 - For k-fold train_fold.py: you do not need validation folder.
 
