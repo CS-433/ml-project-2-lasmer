@@ -71,12 +71,12 @@ Note: <br>
 - For regular 'train.py': you should have the following structure: 
 
 |--data  
-|&nbsp;&nbsp;|--training  
-|&nbsp;&nbsp;|    |--labels  
-|&nbsp;&nbsp;|    |--images  
-|&nbsp;&nbsp;|--validation  
-|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|--labels  
-|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|--images  
+|&nbsp;&nbsp;&nbsp;&nbsp;|--training  
+|&nbsp;&nbsp;&nbsp;&nbsp;|    |--labels  
+|&nbsp;&nbsp;&nbsp;&nbsp;|    |--images  
+|&nbsp;&nbsp;&nbsp;&nbsp;|--validation  
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|--labels  
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|--images  
 
 
 
