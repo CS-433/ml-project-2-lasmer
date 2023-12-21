@@ -56,11 +56,11 @@ Note: <br>
 For regular 'train.py': you should have the following structure: <br>
 ├─data <br>
 │  └── training<br>
-│  │          └── labels<br>
-│  │          └── images<br>
+│  │          └──── labels<br>
+│  │          └──── images<br>
 │  └── validation<br>
-│               └── labels<br>
-│               └── images<br>
+│               └────  labels<br>
+│               └────  images<br>
 
 
 - For k-fold `train_fold.py`: you do not need validation folder.
