@@ -172,7 +172,7 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', type=int, default=10, help='input batch size for training (default: 10)')
     parser.add_argument('--epochs', type=int, default=50, help='number of epochs to train (default: 50)')
     parser.add_argument('--lr', type=float, default=3e-4, help='learning rate (default: 3e-4)')
-    parser.add_argument("--model", type=str, default="nl_linknet_egaussian", choices=model_dict.keys(), help="Model to train: e.g: dinknet / linknet / baseline / nl3_linknet / nl34_linknet / nl_linknet_egaussian / nl_linknet_gaussian")
+    parser.add_argument("--model", type=str, default="UNet", choices=model_dict.keys(), help="Model to train: e.g: dinknet / linknet / baseline / nl3_linknet / nl34_linknet / nl_linknet_egaussian / nl_linknet_gaussian")
     parser.add_argument("--loss", type=str, default="dice", help="Loss function to use: e.g: dice_bce / focal_loss / dice_focal_loss")
     args = parser.parse_args()
 
