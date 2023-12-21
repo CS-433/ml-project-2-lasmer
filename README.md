@@ -41,7 +41,8 @@ For additional data, you can change NB_AUGMENTATIONS in `augment_random.py` (by 
 You can download other datasets we used through this link : https://drive.google.com/drive/folders/1gbACOtl24JjgL8i28iU3mKlfwh4-ppGK?usp=share_link
 
 ## Usage
-To use this project, first clone the repository then, ensure that all dependencies listed in `requirements.txt` are installed by running these commands 
+To use this project, first clone the repository, make sure you have python 3.9 or above installed on your system and install all dependencies listed in `requirements.txt` by running:
+
 ```bash 
 git clone https://github.com/CS-433/ml-project-2-lasmer.git
 ```
@@ -51,7 +52,6 @@ cd ml-project-2-lasmer
 ```bash
 pip install -r requirements.txt
 ```
-
 then do the following.
 
 ### Training Models
