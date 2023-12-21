@@ -112,4 +112,4 @@ When running the script, you can specify which models to use for making predicti
    python predict.py --use_crop True --use_TTA True
   ```
 
-
+Prior to making predictions with a particular model, ensure that you have successfully trained the model and saved it in the .pt format. The training and saving process is automated and can be performed using the train.py or train_fold.py scripts.
