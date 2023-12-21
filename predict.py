@@ -25,7 +25,7 @@ model_dict = {
 }
 
 
-def main(args):
+def predict(args):
     if torch.cuda.is_available():
         device = torch.device("cuda:0")
     else:
@@ -108,6 +108,7 @@ def main(args):
         return full_mask
 
     models = {}
+    print(args)
     if args.use_unet:
         models["unet"] = load_unet().eval()
     if args.use_GCDCNN:
@@ -197,4 +198,4 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    main(args)
+    predict(args)
