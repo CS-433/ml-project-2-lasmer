@@ -25,14 +25,14 @@ The original data can be downloaded from AI Crowd using this link : https://www.
 It consists of 100 images of shape 400x400 and their groundtruths. 
 1) Download and unzip training.zip to access the training dataset and train the road segmentation models.
 2) After training, run the models on the test set provided in test_set_images.zip to generate segmentation masks.
-3) Use mask_to_submission.py to convert the masks to the submission format, which would be structured similarly to sample_submission.csv.
-4) (Optional) For additional analysis or verification, convert submissions back into masks using submission_to_mask.py.
+3) Use 'mask_to_submission.py' to convert the masks to the submission format, which would be structured similarly to 'sample_submission.csv'.
+4) (Optional) For additional analysis or verification, convert submissions back into masks using 'submission_to_mask.py'.
 
 ### Data Augmentation 
 We provide two augmentation files since the original data is not enough for training. 
 You can use them by running (one of the following or both)
--  augment_deterministic.py 
--  augment_random.py. 
+-  'augment_deterministic.py'
+-  'augment_random.py' 
 
 This will create a new folder data/augmented with the newly created images.
 For additional data, you can change NB_AUGMENTATIONS in augment_random.py (by default=3)
@@ -48,34 +48,34 @@ To use this project, ensure all dependencies listed in `requirements.txt` are in
 You can run the training scripts (`train.py` or `train_fold.py`) to train the models with your dataset.
 ### Example Commands for Model Training using Unet:
 
-- python train.py --model UNet --batch_size 8 --epochs 50 --loss dice --lr 3e-4
+- ''python train.py --model UNet --batch_size 8 --epochs 50 --loss dice --lr 3e-4'
 
-- python train_fold.py --k_folds 4 --model UNet --batch_size 8 --epochs 50 --loss dice --lr 3e-4 
+- 'python train_fold.py --k_folds 4 --model UNet --batch_size 8 --epochs 50 --loss dice --lr 3e-4'
 
-Note: 
-For regular train.py: you should have the following structure: <br>
-├─data
-│  └── training
-│  │     └── labels
-│  │     └── images
-│  └── validation
-│       └── labels
-│       └── images
+Note: <br>
+For regular 'train.py': you should have the following structure: <br>
+├─data <br>
+│  └── training<br>
+│  │     └── labels<br>
+│  │     └── images<br>
+│  └── validation<br>
+│       └── labels<br>
+│       └── images<br>
 
 
-- For k-fold train_fold.py: you do not need validation folder.
+- For k-fold 'train_fold.py': you do not need validation folder.
 
 ### Predictions
 We created a file predict.py to compute the final masks.
 When running the script, you can specify which models to use for making predictions. For instance:
 
 - To make predictions using only the UNet model (the default setting):<br>
-     python predict.py<br>
+     'python predict.py'<br>
 - To use both UNet and GCDCNN:<br>
-    python predict.py --use_unet True --use_GCDCNN True<br>
+   ' python predict.py --use_unet True --use_GCDCNN True'<br>
 - To use all three models:<br>
-   python predict.py --use_unet True --use_GCDCNN True --use_linknet True<br>
+   'python predict.py --use_unet True --use_GCDCNN True --use_linknet True'<br>
 - To use UNet with cropping and TTA:<br>
-   python predict.py --use_crop True --use_TTA True<br>
+   'python predict.py --use_crop True --use_TTA True'<br>
 
 
