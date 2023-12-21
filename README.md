@@ -38,8 +38,7 @@ This will create a new folder data/augmented with the newly created images.
 For additional data, you can change NB_AUGMENTATIONS in `augment_random.py` (by default=3)
 
 ## Addtionnal Data:
-You can download other datasets we used through this link :
-TODO ** : Drive
+You can download other datasets we used through this link : https://drive.google.com/drive/folders/1gbACOtl24JjgL8i28iU3mKlfwh4-ppGK?usp=share_link
 
 ## Usage
 To use this project, first clone the repository then, ensure that all dependencies listed in `requirements.txt` are installed by running these commands 
