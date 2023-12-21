@@ -42,7 +42,18 @@ You can download other datasets we used through this link :
 TODO ** : Drive
 
 ## Usage
-To use this project, ensure all dependencies listed in `requirements.txt` are installed and then do the following.
+To use this project, first clone the repository then, ensure that all dependencies listed in `requirements.txt` are installed by running these commands 
+```bash 
+git clone https://github.com/CS-433/ml-project-2-lasmer.git
+```
+```bash
+cd ml-project-2-lasmer
+```
+```bash
+pip install -r requirements.txt
+```
+
+then do the following.
 
 ### Training Models
 You can run the training scripts (`train.py` or `train_fold.py`) to train the models with your dataset.
@@ -58,13 +69,14 @@ python train_fold.py --k_folds 4 --model UNet --batch_size 8 --epochs 50 --loss 
 
 Note: <br>
 - For regular 'train.py': you should have the following structure: <br>
-├─data <br>
-│  └── training<br>
-│  │          └──── labels<br>
-│  │          └──── images<br>
-│  └── validation<br>
-│               └────  labels<br>
-│               └────  images<br>
+├─data
+│ ├─ training
+│ │   ├── labels
+│ │   └── images
+│ └─ validation
+│     ├── labels
+│     └── images
+
 
 
 - For k-fold `train_fold.py`: you do not need validation folder.
