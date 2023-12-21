@@ -5,6 +5,7 @@ from Networks.dinknet import *
 from Networks.nllinknet_location import *
 from Networks.nllinknet_pairwise_func import *
 from Networks.UNet import *
+from Networks.GCDCNN import *
 from Loader import *
 import time
 from torch.utils.data import  DataLoader
@@ -15,6 +16,7 @@ from sklearn.metrics import f1_score
 from sklearn.model_selection import KFold
 
 THRESHOLD = 0.5 # Threshold for converting predictions to binary values
+BETA = 0.8 # Beta parameter for the loss (defines the weight of the dice loss if hybrid with BCE is used)
 
 def reset_weights(model):
   """Reset model weights to avoid weight leakage.
@@ -40,19 +42,21 @@ def train(model,batch_size=8, epochs=50, lr=1e-4 ,loss_name="combo",k_folds=5):
     print("Using device: {}".format(device))
     ########################################################################################################################################
     ## Create model
+    savepath = "models/"+ "trained_model_"+ str(model) +".pt"
+    
     ModelClass = model_dict[args.model]
     model = ModelClass(num_classes=1)
     model = model.to(device)
-    calc_loss = CustomLoss(beta=0.8) # Define loss function
+    calc_loss = CustomLoss(beta=BETA) # Define loss function
     current_time = time.strftime("%Y_%m_%d_%H:%M:%S")
-    savepath = "models/"+ "trained_model_"+ model +".pt"
     
     os.makedirs(savepath, exist_ok=True)
 
     ########################################################################################################################################
     ## Create dataset
     transform = transforms.Compose([ transforms.ToTensor(), ]) # Convert PIL Images to tensors 
-    dataset = SatelliteDataset("data/training/images", "data/training/groundtruth", transform=transform)
+    dataset = SatelliteDataset("data/training/images", "data/training/labels", transform=transform)
+    dataset = torch.utils.data.Subset(dataset, range(0, 10))
     print("Total training dataset :", len(dataset))
 
      # Define the K-fold Cross Validator
@@ -63,7 +67,6 @@ def train(model,batch_size=8, epochs=50, lr=1e-4 ,loss_name="combo",k_folds=5):
     for fold, (train_ids, test_ids) in enumerate(kfold.split(dataset)):
         # Print
         print(f'FOLD {fold}/{k_folds-1}')
-        print('--------------------------------')
         # Sample elements randomly from a given list of ids, no replacement.
         train_subsampler = torch.utils.data.SubsetRandomSampler(train_ids)
         test_subsampler = torch.utils.data.SubsetRandomSampler(test_ids)
@@ -84,8 +87,9 @@ def train(model,batch_size=8, epochs=50, lr=1e-4 ,loss_name="combo",k_folds=5):
         ########################################################################################################################################
         # Run the training loop for defined number of epochs
         train_losses = []
-        for epoch in tqdm(range(epochs),desc ="Training"):
+        for epoch in range(epochs):
             print(f'Starting epoch {epoch+1}')
+            print('-' * 20)
             start_time = time.time()
             current_loss = 0.0 # Set current loss value
 
@@ -97,10 +101,8 @@ def train(model,batch_size=8, epochs=50, lr=1e-4 ,loss_name="combo",k_folds=5):
                 loss = calc_loss(outputs, targets,loss_name) 
                 loss.backward() 
                 optimizer.step() 
-            
-                # Log statistics
                 current_loss += loss.item()
-                ('Loss after mini-batch %5d: %.3f' % (i + 1, current_loss / 500))
+
             train_epoch_loss = current_loss / len(train_dataloader)
             train_losses.append(train_epoch_loss)
             print(f"Epoch {epoch}/{epochs - 1} - Training Loss: {train_epoch_loss:.4f}")            
@@ -184,7 +186,9 @@ model_dict = {
     'nl3_linknet': NL3_LinkNet,
     'nl34_linknet': NL34_LinkNet,
     'nl_linknet_egaussian': NL_LinkNet_EGaussian,
-    'nl_linknet_gaussian': NL_LinkNet_Gaussian
+    'nl_linknet_gaussian': NL_LinkNet_Gaussian,
+    'UNet': UNet,
+    'GCDCNN': GCDCNN
 }
 
 
@@ -194,11 +198,12 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', type=int, default=8, help='input batch size for training (default: 8)')
     parser.add_argument('--epochs', type=int, default=70, help='number of epochs to train (default: 70)')
     parser.add_argument('--lr', type=float, default=3e-4, help='learning rate (default: 3e-4)')
-    parser.add_argument("--model", type=str, default="nl34_linknet", choices=model_dict.keys(), help="Model to train: e.g: dinknet / linknet / baseline / nl3_linknet / nl34_linknet / nl_linknet_egaussian / nl_linknet_gaussian")
+    parser.add_argument("--model", type=str, default="UNet", choices=model_dict.keys(), help="Model to train: e.g: dinknet / linknet / baseline / nl3_linknet / nl34_linknet / nl_linknet_egaussian / nl_linknet_gaussian")
     parser.add_argument("--loss", type=str, default="combo", help="Loss function to use: e.g: dice_bce / focal_loss / dice_focal_loss")
     parser.add_argument("--k_folds", type=int, default=5, help="Number of folds for k-fold cross validation")
     
     args = parser.parse_args()
+    print(f"Training model {args.model} with {args.loss} loss for {args.epochs} epochs with learning rate {args.lr} and batch size {args.batch_size}")
     train(args.model,epochs=args.epochs, lr=args.lr, batch_size=args.batch_size,loss_name=args.loss,k_folds=args.k_folds)
     
     
