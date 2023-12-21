@@ -69,13 +69,14 @@ python train_fold.py --k_folds 4 --model UNet --batch_size 8 --epochs 50 --loss 
 
 Note: <br>
 - For regular 'train.py': you should have the following structure: <br>
-├─data
-│ ├─ training
-│ │   ├── labels
-│ │   └── images
-│ └─ validation
-│     ├── labels
-│     └── images
+├─ data
+│  ├─ training
+│  │  ├─ labels
+│  │  └─ images
+│  └─ validation
+│     ├─ labels
+│     └─ images
+
 
 
 
