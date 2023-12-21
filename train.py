@@ -31,11 +31,8 @@ def train(model, batch_size=8, epochs=50, lr=1e-4, loss_name="dice"):
 
     print("Using device: {}".format(device))
     current_time = time.strftime("%Y_%m_%d_%H:%M:%S")
-    savepath = "models/" + "trained_model_" + model + ".pt"
-    os.makedirs(
-        os.path.dirname(savepath), exist_ok=True
-    )  # Ensure directory exists for saving model
-
+    savepath = "models/"
+    model_name = "trained_model_" + str(model)+ ".pt"
     ########################################################################################################################################
     ## Create dataset
     transform = transforms.Compose(
@@ -65,7 +62,7 @@ def train(model, batch_size=8, epochs=50, lr=1e-4, loss_name="dice"):
 
     ########################################################################################################################################
     # Create the selected model
-    ModelClass = model_dict[args.model]
+    ModelClass = model_dict[model]
     model = ModelClass(num_classes=1)
     model = model.to(device)
 
@@ -147,10 +144,10 @@ def train(model, batch_size=8, epochs=50, lr=1e-4, loss_name="dice"):
         # Check if this is the best model so far
         if best_f1_score < val_f1_score:
             best_f1_score = val_f1_score
-            save_model(model, savepath=savepath)
+            save_model(model, savepath=savepath,model_name=model_name)
             print(
                 "New best model {} saved with f1 score: {:.4f}".format(
-                    savepath, best_f1_score
+                    os.path.join(savepath, model_name), best_f1_score
                 )
             )
 
