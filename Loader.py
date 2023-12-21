@@ -34,7 +34,7 @@ class SatelliteDataset(Dataset):
         ## Load Image 
         image = mpimg.imread(img_name)
          
-        if self.resize: # Resize ground truth if necessary
+        if self.resize: # Resize Image if necessary
             if image.shape[0] != SIZE or image.shape[1] != SIZE:
                 image = Image.open(img_name)
                 image = image.resize((SIZE, SIZE))
