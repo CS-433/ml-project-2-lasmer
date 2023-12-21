@@ -8,6 +8,7 @@ from torchvision import models
 from Networks.common.common_module import DecoderBlock, nonlinearity, Dblock
 from Networks.common.non_local.embedded_gaussian import NONLocalBlock2D_EGaussian
 
+
 class Baseline(nn.Module):
     def __init__(self, num_classes=1):
         super(Baseline, self).__init__()
@@ -33,8 +34,6 @@ class Baseline(nn.Module):
         self.finalconv2 = nn.Conv2d(32, 32, 3, padding=1)
         self.finalrelu2 = nonlinearity
         self.finalconv3 = nn.Conv2d(32, num_classes, 2, padding=1)
-        
-
 
     def forward(self, x):
         # Encoder
@@ -51,13 +50,13 @@ class Baseline(nn.Module):
         d3 = self.decoder3(d4) + e2
         d2 = self.decoder2(d3) + e1
         d1 = self.decoder1(d2)
-        
+
         out = self.finaldeconv1(d1)
         out = self.finalrelu1(out)
         out = self.finalconv2(out)
         out = self.finalrelu2(out)
         out = self.finalconv3(out)
-        
+
         return F.sigmoid(out)
 
 
@@ -72,7 +71,6 @@ class NL3_LinkNet(nn.Module):  # add non-local block
         self.firstrelu = resnet.relu
         self.firstmaxpool = resnet.maxpool
         # self.adaptive_pool = nn.AdaptiveMaxPool2d((25, 25))
-
 
         self.encoder1 = resnet.layer1
         self.encoder2 = resnet.layer2
@@ -90,7 +88,7 @@ class NL3_LinkNet(nn.Module):  # add non-local block
         self.finalconv2 = nn.Conv2d(32, 32, 3, padding=1)
         self.finalrelu2 = nonlinearity
         self.finalconv3 = nn.Conv2d(32, num_classes, 2, padding=1)
-        
+
     def forward(self, x):
         # Encoder
         x = self.firstconv(x)
@@ -124,7 +122,7 @@ class NL4_LinkNet(nn.Module):  # add non-local block
 
         filters = (64, 128, 256, 512)
         resnet = models.resnet34(weights="ResNet34_Weights.DEFAULT")
-        self.firstconv = resnet.conv1        
+        self.firstconv = resnet.conv1
         self.firstbn = resnet.bn1
         self.firstrelu = resnet.relu
         self.firstmaxpool = resnet.maxpool
@@ -140,12 +138,13 @@ class NL4_LinkNet(nn.Module):  # add non-local block
         self.decoder2 = DecoderBlock(filters[1], filters[0])
         self.decoder1 = DecoderBlock(filters[0], filters[0])
 
-
-        self.finaldeconv1 = nn.ConvTranspose2d(filters[0], 32, kernel_size=3, stride=2, padding=1) #padding was 1 and stride was 2
+        self.finaldeconv1 = nn.ConvTranspose2d(
+            filters[0], 32, kernel_size=3, stride=2, padding=1
+        )  # padding was 1 and stride was 2
         self.finalrelu1 = nonlinearity
         self.finalconv2 = nn.Conv2d(32, 32, 3, padding=1)
         self.finalrelu2 = nonlinearity
-        self.finalconv3 = nn.Conv2d(32, num_classes, stride = 2, padding=1)
+        self.finalconv3 = nn.Conv2d(32, num_classes, stride=2, padding=1)
 
     def forward(self, x):
         # Encoder
@@ -203,7 +202,6 @@ class NL34_LinkNet(nn.Module):  # add non-local block
         self.finalconv2 = nn.Conv2d(32, 32, 3, padding=1)
         self.finalrelu2 = nonlinearity
         self.finalconv3 = nn.Conv2d(32, num_classes, 2, padding=1)
-        
 
     def forward(self, x):
         # Encoder

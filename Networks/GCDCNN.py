@@ -3,25 +3,31 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-
 class ResidualDilatedBlock(nn.Module):
-    """ 
-    A residual dilated block with 3 dilated convolutional layers 
-        
+    """
+    A residual dilated block with 3 dilated convolutional layers
+
     """
 
     def __init__(self, in_channels=3, out_channels=1):
-        """ Constructor
+        """Constructor
         Args:
             in_channels: input channel dimensionality
             out_channels: output channel dimensionality
-        Returns:    
+        Returns:
             None
         """
         super().__init__()
 
         self.rdb = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=2, padding=1, dilation=1),
+            nn.Conv2d(
+                in_channels,
+                out_channels,
+                kernel_size=3,
+                stride=2,
+                padding=1,
+                dilation=1,
+            ),
             nn.BatchNorm2d(out_channels),
             nn.LeakyReLU(inplace=True),
             nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=2, dilation=2),
@@ -30,9 +36,11 @@ class ResidualDilatedBlock(nn.Module):
             nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=2, dilation=2),
             nn.BatchNorm2d(out_channels),
             nn.LeakyReLU(inplace=True),
-            nn.Dropout2d(p=0.2)
+            nn.Dropout2d(p=0.2),
         )
-        self.convID = nn.Conv2d(in_channels, out_channels, kernel_size=1,stride= 2, padding=0)
+        self.convID = nn.Conv2d(
+            in_channels, out_channels, kernel_size=1, stride=2, padding=0
+        )
 
     def forward(self, x):
         """Forward method.
@@ -40,13 +48,14 @@ class ResidualDilatedBlock(nn.Module):
             x: input tensor
         Returns:
             out: output tensor
-            """
-        return self.rdb(x)+ self.convID(x)
+        """
+        return self.rdb(x) + self.convID(x)
 
-#Risidual block
+
+# Risidual block
 class RisidualBlock(nn.Module):
     def __init__(self, in_channels, out_channels):
-        """ Constructor 
+        """Constructor
         Args:
             in_channels: input channel dimensionality
             out_channels: output channel dimensionality
@@ -65,7 +74,7 @@ class RisidualBlock(nn.Module):
             nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
             nn.BatchNorm2d(out_channels),
             nn.LeakyReLU(inplace=True),
-            nn.Dropout2d(p=0.2)
+            nn.Dropout2d(p=0.2),
         )
         self.convID = nn.Conv2d(in_channels, out_channels, kernel_size=1, padding=0)
 
@@ -76,12 +85,13 @@ class RisidualBlock(nn.Module):
         Returns:
             out: output tensor
         """
-        return self.rdb(x)+ self.convID(x)
+        return self.rdb(x) + self.convID(x)
 
-#Double Convolution block
+
+# Double Convolution block
 class DoubleConv(nn.Module):
     def __init__(self, in_channels, out_channels):
-        """ Constructor
+        """Constructor
         Args:
             in_channels: input channel dimensionality
             out_channels: output channel dimensionality§
@@ -94,7 +104,7 @@ class DoubleConv(nn.Module):
             nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
-            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
+            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
         )
         self.convID = nn.Conv2d(in_channels, out_channels, kernel_size=1, padding=0)
 
@@ -105,12 +115,13 @@ class DoubleConv(nn.Module):
         Returns:
             out: output tensor
         """
-        return self.double_conv(x)+self.convID(x)
+        return self.double_conv(x) + self.convID(x)
+
 
 # Upsampling block
 class UpConv(nn.Module):
     def __init__(self, in_channels, out_channels, dilation=1):
-        """ Constructor
+        """Constructor
         Args:
             in_channels: input channel dimensionality
             out_channels: output channel dimensionality
@@ -121,10 +132,13 @@ class UpConv(nn.Module):
         super().__init__()
 
         self.upconv = nn.Sequential(
-            nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=2), #32x32 -> 64x64
+            nn.ConvTranspose2d(
+                in_channels, out_channels, kernel_size=2, stride=2
+            ),  # 32x32 -> 64x64
             nn.BatchNorm2d(out_channels),
-            nn.LeakyReLU(inplace=True)
+            nn.LeakyReLU(inplace=True),
         )
+
     def forward(self, x, input):
         """Forward method.
         Args:
@@ -137,10 +151,10 @@ class UpConv(nn.Module):
         x = torch.cat([x, input], dim=1)
         return x
 
-class PPM(nn.Module):
 
+class PPM(nn.Module):
     def __init__(self, num_class, fc_dim, pool_scales=(1, 2, 3, 6)):
-        """ Constructor
+        """Constructor
         Args:
             num_class: number of classes
             fc_dim: number of filters in the last conv layer
@@ -152,19 +166,29 @@ class PPM(nn.Module):
 
         self.ppm = []
         for scale in pool_scales:
-            self.ppm.append(nn.Sequential(nn.AdaptiveAvgPool2d(scale),
-                                          nn.Conv2d(fc_dim, 512, kernel_size=1, bias=False),
-                                          nn.BatchNorm2d(512),
-                                          nn.ReLU(inplace=True)))
+            self.ppm.append(
+                nn.Sequential(
+                    nn.AdaptiveAvgPool2d(scale),
+                    nn.Conv2d(fc_dim, 512, kernel_size=1, bias=False),
+                    nn.BatchNorm2d(512),
+                    nn.ReLU(inplace=True),
+                )
+            )
 
         self.ppm = nn.ModuleList(self.ppm)
 
         self.conv_last = nn.Sequential(
-            nn.Conv2d(fc_dim + len(pool_scales)*512, 512, kernel_size=3, padding=1, bias=False),
+            nn.Conv2d(
+                fc_dim + len(pool_scales) * 512,
+                512,
+                kernel_size=3,
+                padding=1,
+                bias=False,
+            ),
             nn.BatchNorm2d(512),
             nn.ReLU(inplace=True),
             nn.Dropout2d(0.1),
-            nn.Conv2d(512, num_class, kernel_size=1)
+            nn.Conv2d(512, num_class, kernel_size=1),
         )
 
     def forward(self, x, seg_size=None):
@@ -179,16 +203,22 @@ class PPM(nn.Module):
         ppm_out = [x]
 
         for pool_scale in self.ppm:
-            ppm_out.append(nn.functional.interpolate(pool_scale(x),
-                                                     (input_size[2], input_size[3]),
-                                                     mode='bilinear',
-                                                     align_corners=False))
+            ppm_out.append(
+                nn.functional.interpolate(
+                    pool_scale(x),
+                    (input_size[2], input_size[3]),
+                    mode="bilinear",
+                    align_corners=False,
+                )
+            )
         ppm_out = torch.cat(ppm_out, 1)
 
         x = self.conv_last(ppm_out)
 
         if seg_size:  # is True during inference
-            x = nn.functional.interpolate(x, size=seg_size, mode='bilinear', align_corners=False)
+            x = nn.functional.interpolate(
+                x, size=seg_size, mode="bilinear", align_corners=False
+            )
             x = nn.functional.softmax(x, dim=1)
         else:
             x = nn.functional.log_softmax(x, dim=1)
@@ -196,11 +226,10 @@ class PPM(nn.Module):
         return x
 
 
-
 # GC-DCNN model
 class GCDCNN(nn.Module):
-    def __init__ (self, n_channels=3, num_classes=1):
-        """ Constructor
+    def __init__(self, n_channels=3, num_classes=1):
+        """Constructor
         Args:
             n_channels: input channel dimensionality
             n_classes: output channel dimensionality

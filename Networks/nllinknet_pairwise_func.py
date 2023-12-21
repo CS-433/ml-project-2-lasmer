@@ -45,7 +45,9 @@ class NL_LinkNet_DotProduct(nn.Module):  # add non-local block
         self.decoder1 = DecoderBlock(filters[0], filters[0])
 
         self.finaldeconv1 = nn.ConvTranspose2d(filters[0], 32, 4, 2, 1)
-        self.finaldeconv1 = nn.ConvTranspose2d(filters[0], 32, kernel_size=3, stride=1, padding=0) #padding was 1 and stride was 2
+        self.finaldeconv1 = nn.ConvTranspose2d(
+            filters[0], 32, kernel_size=3, stride=1, padding=0
+        )  # padding was 1 and stride was 2
         self.finalrelu1 = nonlinearity
         self.finalconv2 = nn.Conv2d(32, 32, 3, padding=0)
         self.finalrelu2 = nonlinearity
@@ -112,7 +114,9 @@ class NL_LinkNet_Gaussian(nn.Module):  # add non-local block
         self.decoder1 = DecoderBlock(filters[0], filters[0])
 
         # self.finaldeconv1 = nn.ConvTranspose2d(filters[0], 32, 4, 2, 1)
-        self.finaldeconv1 = nn.ConvTranspose2d(filters[0], 32, kernel_size=3, stride=1, padding=0) #padding was 1 and stride was 2
+        self.finaldeconv1 = nn.ConvTranspose2d(
+            filters[0], 32, kernel_size=3, stride=1, padding=0
+        )  # padding was 1 and stride was 2
         self.finalrelu1 = nonlinearity
         self.finalconv2 = nn.Conv2d(32, 32, 3, padding=0)
         self.finalrelu2 = nonlinearity
@@ -179,7 +183,9 @@ class NL_LinkNet_EGaussian(nn.Module):  # add non-local block
         self.decoder1 = DecoderBlock(filters[0], filters[0])
 
         # self.finaldeconv1 = nn.ConvTranspose2d(filters[0], 32, 4, 2, 1)
-        self.finaldeconv1 = nn.ConvTranspose2d(filters[0], 32, kernel_size=3, stride=1, padding=0) #padding was 1 and stride was 2
+        self.finaldeconv1 = nn.ConvTranspose2d(
+            filters[0], 32, kernel_size=3, stride=1, padding=0
+        )  # padding was 1 and stride was 2
         self.finalrelu1 = nonlinearity
         self.finalconv2 = nn.Conv2d(32, 32, 3, padding=0)
         self.finalrelu2 = nonlinearity

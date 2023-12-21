@@ -8,6 +8,7 @@ class DoubleConv(nn.Module):
     A double convolutional block that performs two consecutive sets of convolution,
     batch normalization, and ReLU operations.
     """
+
     def __init__(self, in_channels, out_channels):
         """
         constructor for DoubleConv class
@@ -25,9 +26,9 @@ class DoubleConv(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True)
+            nn.ReLU(inplace=True),
         )
-        
+
     def forward(self, x):
         """
         forward method for DoubleConv class
@@ -39,11 +40,11 @@ class DoubleConv(nn.Module):
         return self.double_conv(x)
 
 
-
 class UpConv(nn.Module):
     """
     An upsampling block using transposed convolutions.
     """
+
     def __init__(self, in_channels, out_channels):
         """
         constructor for UpConv class
@@ -77,7 +78,7 @@ class UNet(nn.Module):
         dc6, dc7, dc8, dc9 (DoubleConv): The double convolution blocks.
         outc (nn.Conv2d): The final convolutional layer to output the segmentation map.
     """
-    
+
     def __init__(self, n_channels=3, num_classes=1):
         """
         constructor for UNet class
@@ -105,7 +106,7 @@ class UNet(nn.Module):
         self.up4 = UpConv(128, 64)
         self.dc9 = DoubleConv(128, 64)
         self.outc = nn.Conv2d(64, num_classes, kernel_size=1)
-    
+
     def forward(self, x):
         """
         forward method for UNet class

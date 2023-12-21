@@ -13,7 +13,9 @@ class Dblock_more_dilate(nn.Module):
         self.dilate2 = nn.Conv2d(channel, channel, kernel_size=3, dilation=2, padding=2)
         self.dilate3 = nn.Conv2d(channel, channel, kernel_size=3, dilation=4, padding=4)
         self.dilate4 = nn.Conv2d(channel, channel, kernel_size=3, dilation=8, padding=8)
-        self.dilate5 = nn.Conv2d(channel, channel, kernel_size=3, dilation=16, padding=16)
+        self.dilate5 = nn.Conv2d(
+            channel, channel, kernel_size=3, dilation=16, padding=16
+        )
         for m in self.modules():
             if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
                 if m.bias is not None:
@@ -59,7 +61,9 @@ class DecoderBlock(nn.Module):
         self.norm1 = nn.BatchNorm2d(in_channels // 4)
         self.relu1 = nonlinearity
 
-        self.deconv2 = nn.ConvTranspose2d(in_channels // 4, in_channels // 4, 3, stride=2, padding=1, output_padding=1) #stride was 2
+        self.deconv2 = nn.ConvTranspose2d(
+            in_channels // 4, in_channels // 4, 3, stride=2, padding=1, output_padding=1
+        )  # stride was 2
         self.norm2 = nn.BatchNorm2d(in_channels // 4)
         self.relu2 = nonlinearity
 

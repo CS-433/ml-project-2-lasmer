@@ -35,7 +35,6 @@ class DinkNet34(nn.Module):
         self.finalconv2 = nn.Conv2d(32, 32, 3, padding=1)
         self.finalrelu2 = nonlinearity
         self.finalconv3 = nn.Conv2d(32, num_classes, 2, padding=1)
-        
 
     def forward(self, x):
         # Encoder
@@ -50,7 +49,7 @@ class DinkNet34(nn.Module):
 
         # Center
         e4 = self.dblock(e4)
-        
+
         # Decoder
         d4 = self.decoder4(e4) + e3
         d3 = self.decoder3(d4) + e2
@@ -87,11 +86,13 @@ class LinkNet34(nn.Module):
         self.decoder2 = DecoderBlock(filters[1], filters[0])
         self.decoder1 = DecoderBlock(filters[0], filters[0])
 
-        self.finaldeconv1 = nn.ConvTranspose2d(filters[0], 32, kernel_size=3, stride=1, padding=0) #padding was 1 and stride was 2
+        self.finaldeconv1 = nn.ConvTranspose2d(
+            filters[0], 32, kernel_size=3, stride=1, padding=0
+        )  # padding was 1 and stride was 2
         self.finalrelu1 = nonlinearity
-        self.finalconv2 = nn.Conv2d(32, 32, 3, padding=0) #padding was 1
+        self.finalconv2 = nn.Conv2d(32, 32, 3, padding=0)  # padding was 1
         self.finalrelu2 = nonlinearity
-        self.finalconv3 = nn.Conv2d(32, num_classes, 3, padding=1) #padding was 1
+        self.finalconv3 = nn.Conv2d(32, num_classes, 3, padding=1)  # padding was 1
 
     def forward(self, x):
         # Encoder
