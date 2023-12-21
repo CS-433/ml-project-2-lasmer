@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import torch
 
 THRESHOLD = 0.5  # Threshold for converting predictions to binary values
 
@@ -45,10 +46,13 @@ def save_losses(train_losses, val_losses, f1_scores, savepath):
         None"""
 
     losses_path = savepath + ".csv"
+    print(savepath)
+    print(losses_path)
     os.makedirs(os.path.dirname(losses_path), exist_ok=True)
     losses = np.array([train_losses, val_losses, f1_scores])
     np.savetxt(losses_path, losses, delimiter=",")
-    
+
+
 def save_model(model, savepath="models", model_name="best_model.pt"):
     """Save the model
     Args:

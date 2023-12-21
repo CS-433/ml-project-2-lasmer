@@ -102,9 +102,15 @@ def main():
     ## Augment training dataset
     print("Augmenting training dataset...")
     images_dir = "data/training/images"
-    ground_truth_dir = "data/training/groundtruth"
+    ground_truth_dir = "data/training/labels"
     output_dir = "data_augmented/training"  # Specify the directory where augmented images should be saved
-    filenames = os.listdir(images_dir)
+
+    filenames = [
+        f
+        for f in os.listdir(images_dir)
+        if f.lower().endswith((".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".gif"))
+    ]
+
     for index, filename in tqdm(enumerate(filenames), total=len(filenames)):
         image_path = os.path.join(images_dir, filename)
         ground_truth_path = os.path.join(ground_truth_dir, filename)
@@ -114,9 +120,14 @@ def main():
     ## Augment Validation dataset
     print("Augmenting validation dataset...")
     images_dir = "data/validation/images"
-    ground_truth_dir = "data/validation/groundtruth"
+    ground_truth_dir = "data/validation/labels"
     output_dir = "data_augmented/validation"  # Specify the directory where augmented images should be saved
-    filenames = os.listdir(images_dir)
+
+    filenames = [
+        f
+        for f in os.listdir(images_dir)
+        if f.lower().endswith((".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".gif"))
+    ]
     for index, filename in tqdm(enumerate(filenames), total=len(filenames)):
         image_path = os.path.join(images_dir, filename)
         ground_truth_path = os.path.join(ground_truth_dir, filename)

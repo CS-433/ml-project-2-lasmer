@@ -77,13 +77,17 @@ def augment_and_save(
 def main():
     # Define paths
     images_dir = "data/training/images"
-    ground_truth_dir = "data/training/groundtruth"
+    ground_truth_dir = "data/training/labels"
     output_dir = "data/augmented"
 
     # Specific output directories for images and ground truths
     output_image_dir = os.path.join(output_dir, "images")
-    output_gt_dir = os.path.join(output_dir, "ground_truth")
-    filenames = os.listdir(images_dir)
+    output_gt_dir = os.path.join(output_dir, "labels")
+    filenames = [
+        f
+        for f in os.listdir(images_dir)
+        if f.lower().endswith((".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".gif"))
+    ]
 
     # Process each image
     for index, filename in tqdm(enumerate(filenames), total=len(filenames)):

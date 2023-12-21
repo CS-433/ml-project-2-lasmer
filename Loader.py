@@ -64,3 +64,27 @@ class SatelliteDataset(Dataset):
             ground_truth = self.transform(ground_truth)
 
         return image, ground_truth
+
+
+class testDataset(Dataset):
+    def __init__(self, images_dir, transform=None):
+        self.images_dir = images_dir
+        self.transform = transform
+        # Filter out non-image files when listing
+        self.images = [
+            f
+            for f in os.listdir(images_dir)
+            if f.lower().endswith((".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".gif"))
+        ]
+
+    def __len__(self):
+        return len(self.images)
+
+    def __getitem__(self, idx):
+        img_name = os.path.join(self.images_dir, f"test_{idx+1}", f"test_{idx+1}.png")
+        image = mpimg.imread(img_name)
+
+        if self.transform:
+            image = self.transform(image)
+
+        return image

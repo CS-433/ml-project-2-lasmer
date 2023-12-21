@@ -14,6 +14,7 @@ imgwidth = int(math.ceil((600.0 / w)) * w)
 imgheight = int(math.ceil((600.0 / h)) * h)
 nc = 3
 
+
 # Convert an array of binary labels to a uint8
 def binary_to_uint8(img):
     rimg = (img * 255).round().astype(np.uint8)

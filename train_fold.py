@@ -40,18 +40,9 @@ def train(model, batch_size=8, epochs=50, lr=1e-4, loss_name="combo", k_folds=5)
     else:
         device = torch.device("cpu")
     print("Using device: {}".format(device))
-    ########################################################################################################################################
-    ## Create model
-    savepath = "models/" + "trained_model_" + str(model) + ".pt"
 
-    ModelClass = model_dict[args.model]
-    model = ModelClass(num_classes=1)
-    model = model.to(device)
-    calc_loss = CustomLoss(beta=BETA)  # Define loss function
-    current_time = time.strftime("%Y_%m_%d_%H:%M:%S")
-
-    os.makedirs(savepath, exist_ok=True)
-
+    savepath = "models"
+    model_name = "trained_model_" + str(model) + ".pt"
     ########################################################################################################################################
     ## Create dataset
     transform = transforms.Compose(
@@ -59,12 +50,28 @@ def train(model, batch_size=8, epochs=50, lr=1e-4, loss_name="combo", k_folds=5)
             transforms.ToTensor(),
         ]
     )  # Convert PIL Images to tensors
+    resize = False if model in ["UNet", "GCDCNN"] else True
     dataset = SatelliteDataset(
-        "data/training/images", "data/training/labels", transform=transform
+        "data/training/images",
+        "data/training/labels",
+        transform=transform,
+        resize=resize,
     )
-    dataset = torch.utils.data.Subset(dataset, range(0, 10))
     print("Total training dataset :", len(dataset))
 
+    ########################################################################################################################################
+    # Create the selected model
+    ModelClass = model_dict[model]
+    model = ModelClass(num_classes=1)
+    model = model.to(device)
+
+    ########################################################################################################################################
+    # Optimizer and loss function
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.9)
+    calc_loss = CustomLoss(beta=0.8)
+
+    ########################################################################################################################################
     # Define the K-fold Cross Validator
     kfold = KFold(n_splits=k_folds, shuffle=True)
     results = {}
@@ -157,8 +164,7 @@ def train(model, batch_size=8, epochs=50, lr=1e-4, loss_name="combo", k_folds=5)
 
         ########################################################################################################################################
         # Saving the model
-        save_path = os.path.join(savepath, "fold-{fold}.pth")
-        torch.save(network.state_dict(), save_path)
+        save_model(model, savepath=savepath, model_name=f"fold{fold}_" + model_name)
         network.eval()
         targets, predicted = [], []
 
@@ -208,7 +214,6 @@ model_dict = {
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(description="Train a model for road segmentation.")
     parser.add_argument(
         "--batch_size",

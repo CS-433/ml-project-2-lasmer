@@ -21,7 +21,6 @@ THRESHOLD = 0.5  # Threshold for converting predictions to binary values
 
 
 def train(model, batch_size=8, epochs=50, lr=1e-4, loss_name="dice"):
-
     if torch.cuda.is_available():
         device = torch.device("cuda:0")
     # elif torch.backends.mps.is_available():  # Uncomment the following two line if you work with M1 chip Macbook
@@ -30,9 +29,8 @@ def train(model, batch_size=8, epochs=50, lr=1e-4, loss_name="dice"):
         device = torch.device("cpu")
 
     print("Using device: {}".format(device))
-    current_time = time.strftime("%Y_%m_%d_%H:%M:%S")
-    savepath = "models/"
-    model_name = "trained_model_" + str(model)+ ".pt"
+    savepath = "models"
+    model_name = "trained_model_" + str(model) + ".pt"
     ########################################################################################################################################
     ## Create dataset
     transform = transforms.Compose(
@@ -47,6 +45,7 @@ def train(model, batch_size=8, epochs=50, lr=1e-4, loss_name="dice"):
         transform=transform,
         resize=resize,
     )
+
     val_dataset = SatelliteDataset(
         "data/validation/images",
         "data/validation/labels",
@@ -144,7 +143,7 @@ def train(model, batch_size=8, epochs=50, lr=1e-4, loss_name="dice"):
         # Check if this is the best model so far
         if best_f1_score < val_f1_score:
             best_f1_score = val_f1_score
-            save_model(model, savepath=savepath,model_name=model_name)
+            save_model(model, savepath=savepath, model_name=model_name)
             print(
                 "New best model {} saved with f1 score: {:.4f}".format(
                     os.path.join(savepath, model_name), best_f1_score
@@ -159,7 +158,12 @@ def train(model, batch_size=8, epochs=50, lr=1e-4, loss_name="dice"):
         )
 
     # save training and validation losses and f1 scores to csv file
-    save_losses(train_losses, val_losses, f1_scores, savepath=savepath)
+    save_losses(
+        train_losses,
+        val_losses,
+        f1_scores,
+        savepath=os.path.join(savepath, model_name[:-3]),
+    )  # remove .pt from model_name
     return model, train_losses, val_losses
 
 

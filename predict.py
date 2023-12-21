@@ -10,6 +10,7 @@ from Networks.nllinknet_pairwise_func import *
 from Loader import *
 import argparse
 import ttach as tta
+from tqdm import tqdm
 
 model_dict = {
     "dinknet34": DinkNet34,
@@ -31,7 +32,6 @@ def main(args):
         device = torch.device("cpu")
 
     def load_unet():
-
         """Load the UNet model
 
         Returns:
@@ -128,10 +128,12 @@ def main(args):
         # delete the contents of the test_set_masks folder
         for file in os.listdir("test_set_masks"):
             os.remove(os.path.join("test_set_masks", file))
+
     # load the test dataset
+
     test_dataset = testDataset("test_set_images", transform=transform)
 
-    for i in range(len(test_dataset)):
+    for i in tqdm(range(len(test_dataset)), desc="Predicting test images"):
         image = test_dataset[i].unsqueeze(0).to(device)
         outputs = []
         with torch.no_grad():
@@ -159,20 +161,19 @@ def main(args):
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(
         description="predict the test images using the trained model(s).if you want to use multiple models, use --use_unet, --use_GCDCNN, --use_linknet and set them to true"
     )
     parser.add_argument(
         "--use_unet",
         type=bool,
-        default=True,
+        default=False,
         help="use true if you want to use unet (default: True)",
     )
     parser.add_argument(
         "--use_GCDCNN",
         type=bool,
-        default=True,
+        default=False,
         help="use true if you want to use GCDCNN (default: False)",
     )
     parser.add_argument(
