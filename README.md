@@ -53,7 +53,7 @@ You can run the training scripts (`train.py` or `train_fold.py`) to train the mo
 - `python train_fold.py --k_folds 4 --model UNet --batch_size 8 --epochs 50 --loss dice --lr 3e-4`
 
 Note: <br>
-For regular 'train.py': you should have the following structure: <br>
+- For regular 'train.py': you should have the following structure: <br>
 ├─data <br>
 │  └── training<br>
 │  │          └──── labels<br>
