@@ -1,7 +1,5 @@
 from helpers import *
 import os
-import numpy as np
-import copy
 import matplotlib.pyplot as plt
 from Networks.common.custom_loss import *
 from Networks.dinknet import *
@@ -10,16 +8,7 @@ from Networks.GCDCNN import *
 from Networks.nllinknet_location import *
 from Networks.nllinknet_pairwise_func import *
 from Loader import *
-import time
-from torch.utils.data import random_split
-from torch.utils.data import Dataset, DataLoader
-from torch.optim import lr_scheduler
-from tqdm import tqdm
 import argparse
-from sklearn.metrics import f1_score
-from sklearn.model_selection import KFold
-import torch.nn.functional as F
-from PIL import Image
 import ttach as tta
 
 model_dict = {
