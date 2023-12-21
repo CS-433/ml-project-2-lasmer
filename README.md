@@ -42,20 +42,21 @@ To use this project, ensure all dependencies listed in `requirements.txt` are in
 
 ### Training Models
 You can run the training scripts (`train.py` or `train_fold.py`) to train the models with your dataset.
-### Example Commands for Model Training using Unet
-python train.py --model UNet --batch_size 8 --epochs 50 --loss dice --lr 3e-4
-OR
-python train_fold.py --k_folds 4 --model UNet --batch_size 8 --epochs 50 --loss dice --lr 3e-4 
+### Example Commands for Model Training using Unet:
+
+- python train.py --model UNet --batch_size 8 --epochs 50 --loss dice --lr 3e-4
+
+- python train_fold.py --k_folds 4 --model UNet --batch_size 8 --epochs 50 --loss dice --lr 3e-4 
 
 Note: 
 - For regular train.py: you should have the following structure: <br>
 ├─data<br>
 │ └── training<br>
-│	└── labels<br>
-│ 	└── images<br>
+│	      └── labels<br>
+│ 	      └── images<br>
 │ └── validation<br>
-│	└── labels<br>
-│ 	└── images<br>
+│	      └── labels<br>
+│ 	      └── images<br>
 
 - For k-fold train_fold.py: you do not need validation folder.
 
