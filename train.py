@@ -27,7 +27,7 @@ def train(model, batch_size=8, epochs=50, lr=1e-4, loss_name="dice"):
     #    device = torch.device("mps")
     else:
         device = torch.device("cpu")
-    device = torch.device("mps")  # Uncomment this line if you work with M1 chip Macbook
+    
     print("Using device: {}".format(device))
     savepath = "models"
     model_name = "trained_model_" + str(model) + ".pt"
@@ -45,7 +45,7 @@ def train(model, batch_size=8, epochs=50, lr=1e-4, loss_name="dice"):
         transform=transform,
         resize=resize,
     )
-    train_dataset = torch.utils.data.Subset(train_dataset, range(0, 10))
+    
     val_dataset = SatelliteDataset(
         "data/validation/images",
         "data/validation/labels",
